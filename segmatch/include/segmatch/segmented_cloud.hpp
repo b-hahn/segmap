@@ -274,13 +274,13 @@ Id SegmentedCloud::addSegment(const pcl::PointIndices& segment_to_add,
         "indices.";
 
     // Store point inside the segment.
-    segment.getLastView().point_cloud.points.emplace_back(reference_cloud.points[index].x,
-                                                          reference_cloud.points[index].y,
-                                                          reference_cloud.points[index].z);
+    PclPoint segmentPoint;
+    segmentPoint.x = reference_cloud.points[index].x;
+    segmentPoint.y = reference_cloud.points[index].y;
+    segmentPoint.z = reference_cloud.points[index].z;
+    segment.getLastView().point_cloud.points.push_back(segmentPoint);
     if (i % publish_every_x_points == 0) {
-        segment.getLastView().point_cloud_to_publish.points.emplace_back(reference_cloud.points[index].x,
-                                                            reference_cloud.points[index].y,
-                                                            reference_cloud.points[index].z);
+        segment.getLastView().point_cloud_to_publish.points.push_back(segmentPoint);
     }
     ++i;
   }

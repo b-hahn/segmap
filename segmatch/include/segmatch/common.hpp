@@ -23,7 +23,8 @@ typedef PointICloud::Ptr PointICloudPtr;
 typedef std::pair<PointI, PointI> PointIPair;
 typedef std::vector<PointIPair> PointIPairs;
 
-typedef pcl::PointXYZ PclPoint;
+// typedef pcl::PointXYZ PclPoint;
+typedef pcl::PointXYZRGB PclPoint;
 typedef pcl::PointCloud<PclPoint> PointCloud;
 typedef PointCloud::Ptr PointCloudPtr;
 typedef std::pair<PclPoint, PclPoint> PointPair;

@@ -151,8 +151,12 @@ static PclPoint calculateCentroid(const PointCloud& point_cloud){
   } else if (std::fetestexcept(FE_DIVBYZERO)) {
     LOG(ERROR) << "Divide by zero error in centroid computation.";
   }
-
-  return PclPoint(x_mean, y_mean, z_mean);
+  PclPoint point_mean;
+  point_mean.x = x_mean;
+  point_mean.y = y_mean;
+  point_mean.z = z_mean;
+  return point_mean;
+  // return PclPoint(x_mean, y_mean, z_mean);
 }
 
 static PointCloud mapPoint2PointCloud(const MapCloud& map_cloud) {
