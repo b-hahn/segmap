@@ -173,23 +173,74 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
   auto centroid_map = centroid.getVector3fMap();
   uint32_t old_points_count = 0u;
   uint32_t new_points_count = std::distance(data.points_begin, data.points_end);
+  uint32_t centroid_r = 0, centroid_g = 0, centroid_b = 0;  //TODO(ben): uint32_t sufficiently large?
 
   // Add contribution from the existing voxel.
   if (data.old_voxel != nullptr) {
     centroid = *(data.old_voxel->centroid);
     old_points_count = data.old_voxel->num_points;
     if (new_points_count != 0u) {
-      centroid_map *= static_cast<float>(old_points_count);
+      centroid_map *= static_cast<float>(old_points_count);  //ben: multiply mean by old num pts
+      // float centroid_rgb = centroid.rgb;
+      // std::cout << "centroid_rgb: " << centroid_rgb << std::endl;
+      // centroid_r = centroid.r;
+      // centroid_g = centroid.g;
+      // centroid_b = centroid.b;;
+      uint32_t centroid_rgb = *reinterpret_cast<int*>(&centroid.rgb);
+      centroid_r = (centroid_rgb >> 16) & 0xff;
+      centroid_g = (centroid_rgb >> 8) & 0xff;
+      centroid_b = centroid_rgb & 0xff;
+      // centroid_r = (static_cast<uint32_t>(centroid.rgb) >> 16) & 0x000000ff;
+      // centroid_g = (static_cast<uint32_t>(centroid.rgb) >> 8) & 0x000000ff;
+      // centroid_b = static_cast<uint32_t>(centroid.rgb) & 0x000000ff;
+      std::cout << "old centroid_rgb: (" << centroid_r << "," << centroid_g << "," << centroid_b << ")" << std::endl;
+      centroid_r *= old_points_count;
+      centroid_g *= old_points_count;
+      centroid_b *= old_points_count;
     }
   }
   uint32_t total_points_count = old_points_count + new_points_count;
 
   // Add contribution from the new points.
+  uint32_t num_its = 0;
   if (new_points_count != 0u) {
     for (auto it = data.points_begin; it != data.points_end; ++it) {
-      centroid_map += it->point.getVector3fMap();
+      centroid_map += it->point.getVector3fMap();  //ben: add all new points
+      // std::cout << "new r: " << ((static_cast<uint32_t>(it->point.rgb) >> 16) & 0x000000ff) << "and centroid_b: " << centroid_b << std::endl;
+      // centroid_r += (static_cast<uint32_t>(it->point.rgb) >> 16) & 0x000000ff;
+      // centroid_g += (static_cast<uint32_t>(it->point.rgb) >> 8) & 0x000000ff;
+      // centroid_b += static_cast<uint32_t>(it->point.rgb) & 0x000000ff;
+      uint32_t point_rgb = *reinterpret_cast<int*>(&it->point.rgb);
+      centroid_r += (point_rgb >> 16) & 0xff;
+      centroid_g += (point_rgb >> 8) & 0xff;
+      centroid_b += point_rgb & 0xff;
+      // centroid_r += it->point.r;
+      // centroid_g += it->point.g;
+      // centroid_b += it->point.b;
+      // centroid.rgb = it->point.rgb;
+      // TODO(ben): maybe add a function to PointExtended that return r, g and b? 
+      // TODO(ben): can I avoid having to do manual bookkeeping with rgb vs r,g,b?
+      num_its++;
     }
-    centroid_map /= static_cast<float>(total_points_count);
+    centroid_map /= static_cast<float>(total_points_count);  //ben: divide by new total num of points
+    // std::cout << "centroid_r (" << centroid_r << ") / total_points_count (" << total_points_count
+              // << ") = " << centroid_r / total_points_count << std::endl;
+    centroid_r /= total_points_count;  //ben: divide by new total num of points
+    centroid_g /= total_points_count;  //ben: sdivide by new total num of points
+    centroid_b /= total_points_count;  //ben: divide by new total num of points
+    // centroid.r = centroid_r;
+    // centroid.g = centroid_g;
+    // centroid.b = centroid_b;
+    // std::cout << "new centroid_rgb: (" << centroid_r << "," << centroid_g << "," << centroid_b << ")" << std::endl;
+    uint32_t output_rgb = ((uint32_t)centroid_r << 16 | (uint32_t)centroid_g << 8 | (uint32_t)centroid_b);
+    centroid.rgb = *reinterpret_cast<float*>(&output_rgb);
+    // centroid.rgb = static_cast<float>((centroid_r << 16) | (centroid_g << 8) | centroid_b);
+    std::cout << "centroid.rgb (float): " << centroid.rgb
+              << " and converted back r,g,b: " << ((static_cast<uint32_t>(centroid.rgb) >> 16) & 0xff) << ","
+              << ((static_cast<uint32_t>(centroid.rgb) >> 8) & 0xff) << ","
+              << ((static_cast<uint32_t>(centroid.rgb)) & 0xff) << " which should be " << centroid_r << ","
+              << centroid_g << "," << centroid_b << std::endl;
+    // std::cout << "num_its: " << num_its << std::endl;
   }
 
   // Save centroid to the correct point cloud.
