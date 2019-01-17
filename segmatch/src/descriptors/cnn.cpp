@@ -125,9 +125,9 @@ void CNNDescriptor::describe(SegmentedCloud* segmented_cloud_ptr) {
     scales.push_back(scale);
     
     PclPoint thresholded_scale;
-    thresholded_scale.x = std::max(scale.x, min_x_scale_m_);
-    thresholded_scale.y = std::max(scale.y, min_y_scale_m_);
-    thresholded_scale.z = std::max(scale.z, min_z_scale_m_);
+    thresholded_scale.x = std::max(scale.x, static_cast<float>(min_x_scale_m_));
+    thresholded_scale.y = std::max(scale.y, static_cast<float>(min_y_scale_m_));
+    thresholded_scale.z = std::max(scale.z, static_cast<float>(min_z_scale_m_));
     thresholded_scales.push_back(thresholded_scale);
     
     std::vector<float> scales_as_vector;
