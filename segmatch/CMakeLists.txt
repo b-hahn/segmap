@@ -31,6 +31,7 @@ cs_add_library(${PROJECT_NAME}
   src/segmented_cloud.cpp
   src/segmenters/euclidean_segmenter.cpp
   src/segmenters/incremental_segmenter.cpp
+  src/segmenters/rgb_region_growing_segmenter.cpp
   src/segmenters/segmenter_factory.cpp
   src/segmenters/smoothness_constraints_segmenter.cpp
 )
