@@ -4,6 +4,7 @@
 #include "segmatch/segmenters/incremental_segmenter.hpp"
 #include "segmatch/segmenters/smoothness_constraints_segmenter.hpp"
 #include "segmatch/segmenters/rgb_region_growing_segmenter.hpp"
+#include "segmatch/segmenters/semantic_segmenter.hpp"
 
 namespace segmatch {
 
@@ -25,6 +26,8 @@ std::unique_ptr<Segmenter<MapPoint>> SegmenterFactory::create() const {
     return std::unique_ptr<Segmenter<MapPoint>>(new EuclideanSegmenter<MapPoint>(params_));
   } else if (params_.segmenter_type == "RGBRegionGrowing") {
     return std::unique_ptr<Segmenter<MapPoint>>(new RGBRegionGrowingSegmenter<MapPoint>(params_));
+  } else if (params_.segmenter_type == "SemanticEuclideanClustering") {
+    return std::unique_ptr<Segmenter<MapPoint>>(new SemanticSegmenter<MapPoint>(params_));
   } else {
     LOG(FATAL) << "Invalid segmenter type specified: " << params_.segmenter_type;
     throw std::invalid_argument("Invalid segmenter type specified: " + params_.segmenter_type);

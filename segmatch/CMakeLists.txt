@@ -20,6 +20,7 @@ cs_add_library(${PROJECT_NAME}
   src/normal_estimators/simple_normal_estimator.cpp
   src/opencv_random_forest.cpp
   src/points_neighbors_providers/kdtree_points_neighbors_provider.cpp
+  src/points_neighbors_providers/semantic_kdtree_points_neighbors_provider.cpp
   src/points_neighbors_providers/octree_points_neighbors_provider.cpp
   src/recognizers/correspondence_recognizer_factory.cpp
   src/recognizers/geometric_consistency_recognizer.cpp
@@ -27,11 +28,13 @@ cs_add_library(${PROJECT_NAME}
   src/recognizers/incremental_geometric_consistency_recognizer.cpp
   src/recognizers/partitioned_geometric_consistency_recognizer.cpp
   src/rviz_utilities.cpp
+  src/search/semantic_kdtree_flann.cpp
   src/segmatch.cpp
   src/segmented_cloud.cpp
   src/segmenters/euclidean_segmenter.cpp
   src/segmenters/incremental_segmenter.cpp
   src/segmenters/rgb_region_growing_segmenter.cpp
+  src/segmenters/semantic_segmenter.cpp
   src/segmenters/segmenter_factory.cpp
   src/segmenters/smoothness_constraints_segmenter.cpp
 )
