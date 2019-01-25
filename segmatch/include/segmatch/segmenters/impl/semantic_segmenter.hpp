@@ -58,7 +58,7 @@ void SemanticSegmenter<ClusteredPointT>::segment(
   std::cout << "==========================================================\n";
   std::cout << "num point in cloud:" << cloud.size() << std::endl;
   std::cout << "Constructing segmenter!" << std::endl;
-  search::SemanticKdTreeFLANN<ClusteredPointT> segmenter(true);
+  search::SemanticKdTreeFLANN<ClusteredPointT, search::L2_Color<float>> segmenter(true);
   std::cout << "Setting input cloud!" << std::endl;
   segmenter.setInputCloud(cloud_ptr);
   std::cout << "Extracting clusters!" << std::endl;

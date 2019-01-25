@@ -16,6 +16,45 @@
 // TODO(ben): some of this should go in the impl/*.hpp file
 namespace search {
 
+  /**
+ * Squared Euclidean distance functor.
+ *
+ * This is the simpler, unrolled version. This is preferable for
+ * very low dimensionality data (eg 3D points)
+ */
+// TODO(ben): move this somewhere else, header or so?
+template<class T>
+struct L2_Color
+{
+    typedef bool is_kdtree_distance;
+
+    typedef T ElementType;
+    typedef typename flann::Accumulator<T>::Type ResultType;
+
+    template <typename K> std::string type_name();
+    template <typename Iterator1, typename Iterator2>
+    ResultType operator()(Iterator1 a, Iterator2 b, size_t size, ResultType /*worst_dist*/ = -1) const
+    {
+        ResultType result = ResultType();
+        ResultType diff;
+        for(size_t i = 0; i < size; ++i ) {
+            diff = *a++ - *b++;
+            result += diff*diff;
+        }
+
+        // it seems I'll get the type in a compile error
+        return result;
+    }
+
+    template <typename U, typename V>
+    inline ResultType accum_dist(const U& a, const V& b, int) const
+    {
+        std::cout << type_name<decltype(a)>() << '\n';
+        return (a-b)*(a-b);
+    }
+};
+
+
 template<typename PointT, typename Dist = ::flann::L2_Simple<float>>
 class SemanticKdTreeFLANN /* : public pcl::KdTree<PointT> */
 {

@@ -10,4 +10,5 @@
 namespace search {
     // TODO(ben): which specializatoins do I need?
     template class SemanticKdTreeFLANN<segmatch::MapPoint>;
+    template class SemanticKdTreeFLANN<segmatch::MapPoint, typename search::L2_Color<float>>;
 }

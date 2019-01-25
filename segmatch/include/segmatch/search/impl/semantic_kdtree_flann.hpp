@@ -4,7 +4,7 @@
 #include "segmatch/search/semantic_kdtree_flann.hpp"
 
 namespace search {
-extern template class SemanticKdTreeFLANN<segmatch::MapPoint>;
+// extern template class SemanticKdTreeFLANN<segmatch::MapPoint>;
 
 template<typename PointT, typename Dist>
 SemanticKdTreeFLANN<PointT, Dist>::SemanticKdTreeFLANN(bool sorted)
@@ -263,6 +263,9 @@ SemanticKdTreeFLANN<PointT, Dist>::extractEuclideanClusters (const PointCloud &c
 
       r.header = cloud.header;
       clusters.push_back (r);   // We could avoid a copy by working directly in the vector
+      std::string cyan = "\033[0;36m";
+      std::string reset = "\033[0m";
+      std::cout << cyan << "cluster size: " << r.indices.size() << reset << std::endl;
     }
   }
 }
