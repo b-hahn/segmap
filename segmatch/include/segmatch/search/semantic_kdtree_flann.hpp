@@ -49,7 +49,7 @@ struct L2_Color
     template <typename U, typename V>
     inline ResultType accum_dist(const U& a, const V& b, int) const
     {
-        std::cout << type_name<decltype(a)>() << '\n';
+        // std::cout << type_name<decltype(a)>() << '\n';
         return (a-b)*(a-b);
     }
 };
