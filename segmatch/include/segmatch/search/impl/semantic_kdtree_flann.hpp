@@ -32,10 +32,11 @@ void SemanticKdTreeFLANN<PointT, Dist>::setInputCloud (const PointCloudConstPtr 
   cleanup ();   // Perform an automatic cleanup of structures
 
   epsilon_ = 0.0f;   // default error bound value
-  dim_ = 4; // Number of dimensions - default is 4 = xyz hue.
   // TODO(ben): improve how this works. Could use the following like in original but note that PCL POint will contain 6
   // or 7 dimensions instead of 4 or 5.
-  // dim_ = point_representation_->getNumberOfDimensions (); // Number of dimensions
+  dim_ = point_representation_->getNumberOfDimensions (); // Number of dimensions
+  std::cout << "-----------------------------> dim: " << dim_ << " and another_test: " << point_representation_->another_test << std::endl;
+  point_representation_->printNumDims();
 
   input_   = cloud;
   indices_ = indices;
@@ -67,7 +68,18 @@ void SemanticKdTreeFLANN<PointT, Dist>::setInputCloud (const PointCloudConstPtr 
                                                               dim_),
                                       ::flann::KDTreeSingleIndexParams (15))); // max 15 points/leaf
   flann_index_->buildIndex ();
+  // std::cout << "flann_index_ type: " << flann_index_->getType() << std::endl;
 }
+
+template <typename PointT, typename Dist> int 
+search::SemanticKdTreeFLANN<PointT, Dist>::nearestKSearch (const PointT &point, int k, 
+                                                std::vector<int> &k_indices, 
+                                                std::vector<float> &k_distances) const
+{
+  std::cout << "WARNING: Calling placeholder function nearestKSearch - implement if it needs to be used or remove the reference!!!!\n";
+  return -1;
+}
+
 
 template<typename PointT, typename Dist>
 int
@@ -210,7 +222,8 @@ SemanticKdTreeFLANN<PointT, Dist>::extractEuclideanClusters (const PointCloud &c
       return;
   }
   // Check if the tree is sorted -- if it is we don't need to check the first element
-  int nn_start_idx = 0;  // tree->getSortedResults () ? 1 : 0;
+  // int nn_start_idx = 0;  // tree->getSortedResults () ? 1 : 0;
+  int nn_start_idx = getSortedResults () ? 1 : 0;
   // Create a bool vector of processed point indices, and initialize it to false
   std::vector<bool> processed (cloud.points.size (), false);
 

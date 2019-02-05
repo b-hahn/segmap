@@ -2,11 +2,13 @@
 #define SEGMATCH_SEMANTIC_KDTREE_H_
 
 #include <vector>
+#include "segmatch/search/point_representation_spec.hpp"
 
 #include <flann/flann.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_representation.h>
 #include <pcl/PointIndices.h>
+#include <pcl/search/search.h>
 #include <boost/shared_array.hpp>
 
 #include "segmatch/common.hpp"
@@ -56,7 +58,7 @@ struct L2_Color
 
 
 template<typename PointT, typename Dist = ::flann::L2_Simple<float>>
-class SemanticKdTreeFLANN /* : public pcl::KdTree<PointT> */
+class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::KdTree<PointT> */
 {
   public:
     //   using KdTree<PointT>::input_;
@@ -75,7 +77,7 @@ class SemanticKdTreeFLANN /* : public pcl::KdTree<PointT> */
     // typedef boost::shared_ptr<PointCloud> PointCloudPtr;
     typedef boost::shared_ptr<const PointCloud> PointCloudConstPtr;
 
-    typedef pcl::PointRepresentation<PointT> PointRepresentation;
+    typedef pcl::DefaultPointRepresentation<PointT> PointRepresentation;
     // //typedef boost::shared_ptr<PointRepresentation> PointRepresentationPtr;
     typedef boost::shared_ptr<const PointRepresentation> PointRepresentationConstPtr;
 
@@ -109,6 +111,9 @@ class SemanticKdTreeFLANN /* : public pcl::KdTree<PointT> */
     }
 
 
+    bool getSortedResults();
+
+
     /** \brief Get a pointer to the input point cloud dataset. */
     inline PointCloudConstPtr
     getInputCloud () const
@@ -123,6 +128,13 @@ class SemanticKdTreeFLANN /* : public pcl::KdTree<PointT> */
      */
     // template<typename PointT, typename Dist>
     void setInputCloud(const PointCloudConstPtr& cloud, const IndicesConstPtr& indices = IndicesConstPtr());
+
+
+    // TODO: just a placeholder function, requried only s.t. definition for this function inherited from search.h exists. Fix that.
+    int nearestKSearch(const PointT& point,
+                       int k,
+                       std::vector<int>& k_indices,
+                       std::vector<float>& k_sqr_distances) const;
 
     /** \brief Search for all the nearest neighbors of the query point in a given radius.
      *
@@ -235,7 +247,7 @@ class SemanticKdTreeFLANN /* : public pcl::KdTree<PointT> */
     void convertCloudToArray(const PointCloud& cloud, const std::vector<int>& indices);
 
     /** \brief Class getName method. */
-    virtual std::string getName() const { return ("SemanticKdTreeFLANN"); }
+    virtual const std::string& getName() const { return ("SemanticKdTreeFLANN"); }
 
     /** \brief A FLANN index object. */
     boost::shared_ptr<FLANNIndex> flann_index_;

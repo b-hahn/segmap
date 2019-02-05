@@ -33,15 +33,19 @@ void SemanticSegmenter<ClusteredPointT>::segment(
     std::vector<Id>& cluster_ids_to_segment_ids,
     std::vector<std::pair<Id, Id>>& renamed_segments) {
   BENCHMARK_BLOCK("SM.Worker.Segmenter");
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
   // Clear segments.
   segmented_cloud.clear();
 
   //TODO(ben): make_shared() creates deep copy - figure otu some other way to this that avoid copying
   typename pcl::PointCloud <ClusteredPointT>::Ptr cloud_ptr = cloud.makeShared();
   // TODO(ben): or set tree to points_neighbors_provider.getPclSearchObject()
+  // TODO: here, use an inherited version of KdTree that knows about my version of DefaultPointRepresentation 
+  //       which, moreover, is derived from pcl/search/kdtree and not pcl/kdtree/kdtree. The former is a wrapper for the latter
+  //       which additionally inherits the searc/search class. 
+  //       My SemanticKdtreeFLANN is a bit of a mess, contains stuff from all over. Could I maybe just inherit the pcl/search/kdtree, add
+  //       the point_representations specialization, add my L2_semantics method and leave it at that?
   typename pcl::search::Search<ClusteredPointT>::Ptr tree =
-    boost::shared_ptr<pcl::search::Search<ClusteredPointT>>(new pcl::search::KdTree<ClusteredPointT>);
+    boost::shared_ptr<pcl::search::Search<ClusteredPointT>>(new search::SemanticKdTreeFLANN<ClusteredPointT>);
   // std::vector<pcl::PointIndices> input_cloud_indices;
   pcl::IndicesPtr indices (new std::vector<int>(cloud.size()));
   std::iota(indices->begin(), indices->end(), 0);
@@ -58,7 +62,8 @@ void SemanticSegmenter<ClusteredPointT>::segment(
   std::cout << "==========================================================\n";
   std::cout << "num point in cloud:" << cloud.size() << std::endl;
   std::cout << "Constructing segmenter!" << std::endl;
-  search::SemanticKdTreeFLANN<ClusteredPointT, search::L2_Color<float>> segmenter(true);
+  search::SemanticKdTreeFLANN<ClusteredPointT> segmenter(true);
+  // search::SemanticKdTreeFLANN<ClusteredPointT, search::L2_Color<float>> segmenter(true);
   std::cout << "Setting input cloud!" << std::endl;
   segmenter.setInputCloud(cloud_ptr);
   std::cout << "Extracting clusters!" << std::endl;
@@ -66,7 +71,6 @@ void SemanticSegmenter<ClusteredPointT>::segment(
       cloud, /* points_neighbors_provider.getPclSearchObject(), */ radius_for_growing_, cluster_indices,
       min_segment_size_,max_segment_size_);
   std::cout << "Done with extraction!" << std::endl;
-  // segmenter.extractClusters(&point_indices);
 
   for (const auto& point_indices : cluster_indices) {
     segmented_cloud.addSegment(point_indices, cloud);
