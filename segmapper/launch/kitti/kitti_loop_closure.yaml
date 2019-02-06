@@ -12,7 +12,8 @@ SegMapper: {
     use_odometry_information: true,
     
     odom_frame: "world",
-    sensor_frame: "velodyne",
+    sensor_frame: "cam02",
+    # sensor_frame: "velodyne",
     
     assembled_cloud_sub_topic: "/velodyne_points",
     trajectory_pub_topic: "trajectory",
@@ -26,6 +27,9 @@ SegMapper: {
     publish_distant_map: false,
     publish_full_map: false,
     map_publication_rate_hz: 3,
+
+    remove_ground_from_local_map: true,
+    ground_distance_to_robot_center_m: 1.70,
   },
  
   # SegMatchWorker parameters
@@ -41,7 +45,7 @@ SegMapper: {
   ratio_of_points_to_keep_when_publishing: 1.0,
   
   export_segments_and_matches: false,
-  publish_predicted_segment_matches: false,
+  publish_predicted_segment_matches: true,  # to show potential matches
   
   line_scale_loop_closures: 5.0,
   line_scale_matches: 0.5,
@@ -64,10 +68,12 @@ SegMapper: {
     },
     
     Segmenters: {      
-      segmenter_type: "IncrementalEuclideanDistance", # IncrementalSmoothnessConstraints, SimpleSmoothnessConstraints
-      min_cluster_size: 100,
+      # segmenter_type: "IncrementalEuclideanDistance", #"RGBRegionGrowing", # IncrementalSmoothnessConstraints, SimpleSmoothnessConstraints
+      # segmenter_type: "SemanticEuclideanClustering",
+      segmenter_type: "SimpleEuclideanDistance",
+      min_cluster_size: 20,
       max_cluster_size: 15000,
-      radius_for_growing: 0.2
+      radius_for_growing: 0.5,
     },
 
     Descriptors: {
@@ -88,9 +94,9 @@ SegMapper: {
     },
 
     GeometricConsistency: {
-      recognizer_type: "Incremental", #"Simple", "Partitioned"
-      resolution: 0.4,
-      min_cluster_size: 6,
+      recognizer_type: "Simple", #"Simple", "Partitioned"
+      resolution: 1.0,  # higher for more matches
+      min_cluster_size: 6,  # lower for more matches
       max_consistency_distance_for_caching: 3.0,
     }
   },
@@ -109,7 +115,7 @@ SegMapper: {
       add_m_estimator_on_odom: false,
       add_m_estimator_on_icp: false,
     
-      use_icp_factors: true, #Introducing ICP constraints will introduce a drift.
+      use_icp_factors: false, #Introducing ICP constraints will introduce a drift.
       use_odom_factors: true,
       nscan_to_match: 3,
       nscan_in_sub_map: 5,

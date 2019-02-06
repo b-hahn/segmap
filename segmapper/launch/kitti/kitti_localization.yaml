@@ -12,7 +12,8 @@ SegMapper: {
     use_odometry_information: true,
     
     odom_frame: "world",
-    sensor_frame: "velodyne",
+    # sensor_frame: "velodyne",
+    sensor_frame: "cam02",
     
     assembled_cloud_sub_topic: "/velodyne_points",
     trajectory_pub_topic: "trajectory",
@@ -26,6 +27,9 @@ SegMapper: {
     publish_distant_map: false,
     publish_full_map: false,
     map_publication_rate_hz: 3,
+
+    remove_ground_from_local_map: true,
+    ground_distance_to_robot_center_m: 1.70,
   },
  
   # SegMatchWorker parameters
@@ -41,9 +45,9 @@ SegMapper: {
   ratio_of_points_to_keep_when_publishing: 1.0,
   
   export_segments_and_matches: false,
-  publish_predicted_segment_matches: false,
+  publish_predicted_segment_matches: true,
   
-  line_scale_loop_closures: 5.0,
+  line_scale_loop_closures: 2.0,
   line_scale_matches: 0.4,
 
   SegMatch: {
@@ -69,9 +73,9 @@ SegMapper: {
     
     Segmenters: {
       segmenter_type: "IncrementalEuclideanDistance", # IncrementalSmoothnessConstraints, SimpleSmoothnessConstraints
-      min_cluster_size: 100,
+      min_cluster_size: 40,
       max_cluster_size: 15000,
-      radius_for_growing: 0.2
+      radius_for_growing: 0.5,
     },
 
     Descriptors: {
@@ -92,8 +96,8 @@ SegMapper: {
     },
 
     GeometricConsistency: {
-      recognizer_type: "Incremental", #"Simple", "Partitioned"
-      resolution: 0.4,
+      recognizer_type: "Simple",  #"Incremental", #"Simple", "Partitioned"
+      resolution: 1.0,
       min_cluster_size: 6,
       max_consistency_distance_for_caching: 3.0,
     }
