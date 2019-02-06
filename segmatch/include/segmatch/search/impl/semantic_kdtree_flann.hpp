@@ -4,13 +4,11 @@
 #include "segmatch/search/semantic_kdtree_flann.hpp"
 
 namespace search {
-// extern template class SemanticKdTreeFLANN<segmatch::MapPoint>;
 
 template<typename PointT, typename Dist>
 SemanticKdTreeFLANN<PointT, Dist>::SemanticKdTreeFLANN(bool sorted)
-  : /* pcl::KdTree<PointT> (sorted)
-  , */
-  flann_index_()
+  : sorted_(sorted)
+  , flann_index_()
   , cloud_()
   , index_mapping_()
   , identity_mapping_(false)
@@ -18,8 +16,16 @@ SemanticKdTreeFLANN<PointT, Dist>::SemanticKdTreeFLANN(bool sorted)
   , total_nr_points_(0)
   , param_k_(::flann::SearchParams(-1, epsilon_))
   , param_radius_(::flann::SearchParams(-1, epsilon_, sorted))
-  , point_representation_(new pcl::DefaultPointRepresentation<PointT>)
+  , pcl::search::Search<PointT> ("KdTree", sorted)
+  , point_representation_(new pcl::SemanticPointRepresentation<PointT>())
 {
+}
+
+
+template <typename PointT, typename Dist> bool
+SemanticKdTreeFLANN<PointT, Dist>::getSortedResults()
+{
+  return (sorted_);
 }
 
 // template <typename PointT, typename Dist> void 

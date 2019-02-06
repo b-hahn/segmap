@@ -44,8 +44,8 @@ void SemanticSegmenter<ClusteredPointT>::segment(
   //       which additionally inherits the searc/search class. 
   //       My SemanticKdtreeFLANN is a bit of a mess, contains stuff from all over. Could I maybe just inherit the pcl/search/kdtree, add
   //       the point_representations specialization, add my L2_semantics method and leave it at that?
-  typename pcl::search::Search<ClusteredPointT>::Ptr tree =
-    boost::shared_ptr<pcl::search::Search<ClusteredPointT>>(new search::SemanticKdTreeFLANN<ClusteredPointT>);
+  // typename pcl::search::Search<ClusteredPointT>::Ptr tree =
+  //   boost::shared_ptr<pcl::search::Search<ClusteredPointT>>(new search::SemanticKdTreeFLANN<ClusteredPointT, search::L2_Color<float>>);
   // std::vector<pcl::PointIndices> input_cloud_indices;
   pcl::IndicesPtr indices (new std::vector<int>(cloud.size()));
   std::iota(indices->begin(), indices->end(), 0);
@@ -62,8 +62,8 @@ void SemanticSegmenter<ClusteredPointT>::segment(
   std::cout << "==========================================================\n";
   std::cout << "num point in cloud:" << cloud.size() << std::endl;
   std::cout << "Constructing segmenter!" << std::endl;
-  search::SemanticKdTreeFLANN<ClusteredPointT> segmenter(true);
-  // search::SemanticKdTreeFLANN<ClusteredPointT, search::L2_Color<float>> segmenter(true);
+  // search::SemanticKdTreeFLANN<ClusteredPointT> segmenter(true);
+  search::SemanticKdTreeFLANN<ClusteredPointT, search::L2_Color<float>> segmenter(true);
   std::cout << "Setting input cloud!" << std::endl;
   segmenter.setInputCloud(cloud_ptr);
   std::cout << "Extracting clusters!" << std::endl;

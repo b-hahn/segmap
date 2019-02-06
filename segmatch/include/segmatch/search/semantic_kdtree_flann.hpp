@@ -77,7 +77,7 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
     // typedef boost::shared_ptr<PointCloud> PointCloudPtr;
     typedef boost::shared_ptr<const PointCloud> PointCloudConstPtr;
 
-    typedef pcl::DefaultPointRepresentation<PointT> PointRepresentation;
+    typedef pcl::SemanticPointRepresentation<PointT> PointRepresentation;
     // //typedef boost::shared_ptr<PointRepresentation> PointRepresentationPtr;
     typedef boost::shared_ptr<const PointRepresentation> PointRepresentationConstPtr;
 
@@ -107,7 +107,7 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
     */
     virtual ~SemanticKdTreeFLANN ()
     {
-      // cleanup ();
+      cleanup ();
     }
 
 
