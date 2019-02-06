@@ -193,7 +193,7 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
       // centroid_r = (static_cast<uint32_t>(centroid.rgb) >> 16) & 0x000000ff;
       // centroid_g = (static_cast<uint32_t>(centroid.rgb) >> 8) & 0x000000ff;
       // centroid_b = static_cast<uint32_t>(centroid.rgb) & 0x000000ff;
-      std::cout << "old centroid_rgb: (" << centroid_r << "," << centroid_g << "," << centroid_b << ")" << std::endl;
+      // std::cout << "old centroid_rgb: (" << centroid_r << "," << centroid_g << "," << centroid_b << ")" << std::endl;
       centroid_r *= old_points_count;
       centroid_g *= old_points_count;
       centroid_b *= old_points_count;
@@ -235,11 +235,11 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     uint32_t output_rgb = ((uint32_t)centroid_r << 16 | (uint32_t)centroid_g << 8 | (uint32_t)centroid_b);
     centroid.rgb = *reinterpret_cast<float*>(&output_rgb);
     // centroid.rgb = static_cast<float>((centroid_r << 16) | (centroid_g << 8) | centroid_b);
-    std::cout << "centroid.rgb (float): " << centroid.rgb
-              << " and converted back r,g,b: " << ((static_cast<uint32_t>(centroid.rgb) >> 16) & 0xff) << ","
-              << ((static_cast<uint32_t>(centroid.rgb) >> 8) & 0xff) << ","
-              << ((static_cast<uint32_t>(centroid.rgb)) & 0xff) << " which should be " << centroid_r << ","
-              << centroid_g << "," << centroid_b << std::endl;
+    // std::cout << "centroid.rgb (float): " << centroid.rgb
+    //           << " and converted back r,g,b: " << ((static_cast<uint32_t>(centroid.rgb) >> 16) & 0xff) << ","
+    //           << ((static_cast<uint32_t>(centroid.rgb) >> 8) & 0xff) << ","
+    //           << ((static_cast<uint32_t>(centroid.rgb)) & 0xff) << " which should be " << centroid_r << ","
+    //           << centroid_g << "," << centroid_b << std::endl;
     // std::cout << "num_its: " << num_its << std::endl;
   }
 

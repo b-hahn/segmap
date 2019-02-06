@@ -33,7 +33,6 @@ void RGBRegionGrowingSegmenter<ClusteredPointT>::segment(
     std::vector<Id>& cluster_ids_to_segment_ids,
     std::vector<std::pair<Id, Id>>& renamed_segments) {
   BENCHMARK_BLOCK("SM.Worker.Segmenter");
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
   // Clear segments.
   segmented_cloud.clear();
 
