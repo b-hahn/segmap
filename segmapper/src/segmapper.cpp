@@ -130,7 +130,7 @@ void SegMapper::publishMapThread() {
           std::cout << "local_maps[0].rgb: " << std::to_string(local_maps[0].rgb) << " which is rgb: ("
                     << std::to_string(static_cast<uint32_t>(local_maps[0].rgb) >> 16 & 0xff) << ","
                     << std::to_string(static_cast<uint32_t>(local_maps[0].rgb) >> 8 & 0xff) << ","
-                    << std::to_string(static_cast<uint32_t>(local_maps[0].rgb) & 0xff) << " and r,g,b,a "
+                    << std::to_string(static_cast<uint32_t>(local_maps[0].rgb) & 0xff) << ") and r,g,b,a "
                     << std::to_string(static_cast<uint32_t>(local_maps[0].r)) << ","
                     << std::to_string(static_cast<uint32_t>(local_maps[0].g)) << ","
                     << std::to_string(static_cast<uint32_t>(local_maps[0].b)) << ","

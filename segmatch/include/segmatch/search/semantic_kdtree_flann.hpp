@@ -25,6 +25,7 @@ namespace search {
  * very low dimensionality data (eg 3D points)
  */
 // TODO(ben): move this somewhere else, header or so?
+//TODO: specialize for 4D color distance, 4D semantics and 5D color + semantics
 template<class T>
 struct L2_Color
 {
@@ -39,21 +40,29 @@ struct L2_Color
     {
         ResultType result = ResultType();
         ResultType diff;
-        for(size_t i = 0; i < size; ++i ) {
+        // std::cout << *(a + 1) << " and " << *(b + 1) << std::endl;
+        // use unweighted squared difference for x, y and z coords
+        for(size_t i = 0; i < 3; ++i ) {
             diff = *a++ - *b++;
             result += diff*diff;
         }
-
-        // it seems I'll get the type in a compile error
+        // weight difference in hue by a tunable factor
+        // max difference for hue will be 180 (due to symmetry)
+        float xyz_result = result;
+        float hue_diff = *(a + 3) - *(b + 3);
+        result += hue_weight * hue_diff * hue_diff;
+        // std::cout << "xyz_result: " << xyz_result << " total results: " << result << "(" << xyz_result / result * 100 << "%)\n";
         return result;
     }
 
     template <typename U, typename V>
     inline ResultType accum_dist(const U& a, const V& b, int) const
     {
-        // std::cout << type_name<decltype(a)>() << '\n';
         return (a-b)*(a-b);
     }
+
+    // TODO: tune this parameter
+    static constexpr float hue_weight = 0.01;
 };
 
 

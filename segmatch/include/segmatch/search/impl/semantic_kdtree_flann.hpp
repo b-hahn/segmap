@@ -28,9 +28,7 @@ SemanticKdTreeFLANN<PointT, Dist>::getSortedResults()
   return (sorted_);
 }
 
-// template <typename PointT, typename Dist> void 
-// SemanticKdTreeFLANN::setInputCloud (const PointCloudConstPtr &cloud, const IndicesConstPtr &indices)
-// {}
+
 template <typename PointT, typename Dist>
 void SemanticKdTreeFLANN<PointT, Dist>::setInputCloud (const PointCloudConstPtr &cloud, const IndicesConstPtr &indices)
 {
@@ -282,9 +280,9 @@ SemanticKdTreeFLANN<PointT, Dist>::extractEuclideanClusters (const PointCloud &c
 
       r.header = cloud.header;
       clusters.push_back (r);   // We could avoid a copy by working directly in the vector
-      std::string cyan = "\033[0;36m";
-      std::string reset = "\033[0m";
-      std::cout << cyan << "cluster size: " << r.indices.size() << reset << std::endl;
+      // std::string cyan = "\033[0;36m";
+      // std::string reset = "\033[0m";
+      // std::cout << cyan << "cluster size: " << r.indices.size() << reset << std::endl;
     }
   }
 }

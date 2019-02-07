@@ -1,44 +1,14 @@
 #ifndef SEGMATCH_POINT_REPRESENTATION_SPEC_H_
 #define SEGMATCH_POINT_REPRESENTATION_SPEC_H_
 
+#include <algorithm>
+
 #include <pcl/point_representation.h>
 
 #include "segmatch/common.hpp"
 
 
 namespace pcl {
-
-// template<>
-// class DefaultPointRepresentation<segmatch::PointExtended> : public PointRepresentation<segmatch::PointExtended>
-// // class DefaultPointRepresentation<segmatch::MapPoint> : public PointRepresentation<segmatch::MapPoint>
-// {
-//   public:
-//     DefaultPointRepresentation()
-//     {
-//         nr_dimensions_ = 4;
-//         trivial_ = true;
-//         another_test = 56;
-//         std::cout << "---------------> correct template spec!!!!!!!!!!!!\n";
-//     }
-
-//     // TODO: potentially add functionality to convert rgb to hue here since that's all we need for segmentation. 
-//     virtual void copyToFloatArray(const segmatch::MapPoint& p, float* out) const
-//     {
-//         out[0] = p.x;
-//         out[1] = p.y;
-//         out[2] = p.z;
-//         out[3] = p.rgb;
-//         std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ p.rgb = " << out[3];
-//     }
-
-//     void printNumDims() const {
-//         std::cout << "num dims from inside class: " << nr_dimensions_ << std::endl;
-//     }
-
-//     static constexpr int existance = 447;
-//     int another_test = 43;
-// };
-
 
 // derive DefaultPointRepresentation class
 // TODO: maybe create generic base class and create specialization for color and/or color + semantics
@@ -79,7 +49,41 @@ template <typename PointDefault>
       }
   };
 
+  // TODO: move this function somewhere else
+  static float rgb_to_hue(uint32_t r, uint32_t g, uint32_t b)
+  {
+    float hue = 0;
+    std::vector<float> rgb;
+    rgb.push_back(r / 255.0f);
+    rgb.push_back(g / 255.0f);
+    rgb.push_back(b / 255.0f);
 
+    uint8_t max_index = std::distance(rgb.begin(), std::max_element(rgb.begin(), rgb.end()));
+    uint8_t min_index = std::distance(rgb.begin(), std::min_element(rgb.begin(), rgb.end()));
+    
+    float diff = (rgb[max_index] - rgb[min_index]);
+    
+    // avoid overflow error
+    if (diff < 0.000001) {
+        return 0;
+    }
+
+    // if red has the max value     
+    if (0 == max_index) {
+        hue = (rgb[1] - rgb[2]) / diff * 60;
+    }       
+    else if (1 == max_index) {
+        hue = (2.0 + (rgb[2] - rgb[0]) / diff) * 60;
+    }
+    else if (2 == max_index) {
+        hue = (4.0 + (rgb[0] - rgb[1]) / diff) * 60;
+    }
+
+    return hue >= 0 ? hue : hue + 360;
+
+  }
+
+  // TODO: this class is for 4D color points, add one for 5D points (color + semantics) and 4D semantics points  
   template<>
   class SemanticPointRepresentation<segmatch::MapPoint> : public PointRepresentation<segmatch::MapPoint>
   {
@@ -94,9 +98,16 @@ template <typename PointDefault>
       virtual void copyToFloatArray(const segmatch::MapPoint& p, float* out) const
       {
           out[0] = p.x;
-          out[1] = p.y;
+          out[1] = p.y; 
           out[2] = p.z;
-          out[3] = p.rgb;
+          // use hue instead of color
+          float hue = rgb_to_hue(p.r, p.g, p.b);
+        //   float hue = rgb_to_hue(127, 233, 87);
+        //   std::cout << "hue: " << hue << std::endl;
+          out[3] = hue;
+        //   std::cout << "in copyToFloatArray:" << std::to_string(p.rgb) << std::endl;
+        //   std::cout << "in copyToFloatArray:" << std::to_string(p.r) << ", " << std::to_string(p.g) << ", "
+        //             << std::to_string(p.b) << std::endl;
       }
 
       void printNumDims() const { std::cout << "num dims from inside class: " << nr_dimensions_ << std::endl; }

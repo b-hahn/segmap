@@ -120,6 +120,8 @@ void SegMatch::transferSourceToTarget(unsigned int track_id,
 
 void SegMatch::processCloud(MapCloud& cloud,
                             SegmentedCloud* segmented_cloud) {
+  std::cout << "Size of PC: " << cloud.size() << std::endl;
+  std::cout << "Size of segmented PC 0: " << segmented_cloud->size() << std::endl;
   // Build a kd-tree of the cloud.
   MapCloud::ConstPtr cloud_ptr(&cloud, [](MapCloud const* ptr) {});
   KdTreePointsNeighborsProvider<MapPoint> kd_tree;
@@ -143,14 +145,22 @@ void SegMatch::processCloud(MapCloud& cloud,
     normals = &normal_estimator->getNormals();
   }
 
+  std::cout << "Size of normals: " << normals->size() << std::endl;
   std::vector<Id> segment_ids;
   std::vector<std::pair<Id, Id>> renamed_segments;
   std::vector<bool> is_point_modified(cloud.size(), false);
+  std::cout << "Size of segmented PC 1: " << segmented_cloud->size() << std::endl;
+  std::cout << "Segmenter type: " << params_.segmenter_params.segmenter_type << std::endl;
+  if (cloud.size() > 0) {
+    std::cout << "in processCloud: " << std::to_string(cloud[0].rgb) << std::endl;
+  }
   segmenter_->segment(*normals, is_point_modified, cloud, kd_tree, *segmented_cloud, segment_ids,
                       renamed_segments);
 
   LOG(INFO) << "Removing too near segments from source map.";
+  std::cout << "Size of segmented PC 2: " << segmented_cloud->size() << std::endl;
   filterNearestSegmentsInCloud(*segmented_cloud, params_.centroid_distance_threshold_m, 5u);
+  std::cout << "Size of segmented PC 3: " << segmented_cloud->size() << std::endl;
 
   descriptors_->describe(segmented_cloud);
 }
