@@ -8,8 +8,8 @@ from rosbag import Bag
 
 def main():
 
-    parser = argparse.ArgumentParser(description='Merge one or more bag files
-                                     with the possibilities of filtering topics.')
+    parser = argparse.ArgumentParser(
+        description='Merge one or more bag files with the possibilities of filtering topics.')
     parser.add_argument('outputbag',
                         help='output bag file with topics merged')
     parser.add_argument('inputbag', nargs='+',
@@ -28,7 +28,7 @@ def main():
 
     if (args.verbose):
         print("Writing bag file: " + args.outputbag)
-        print("Matching topics against patters: '%s'" % ' '.join(topics))
+        print("Matching topics against patterns: '%s'" % ' '.join(topics))
 
     with Bag(args.outputbag, 'w') as o: 
         for ifile in args.inputbag:
@@ -56,5 +56,6 @@ def main():
     if (args.verbose):
         print("Total: Included %d messages and skipped %d" % (total_included_count, total_skipped_count))
 
+
 if __name__ == "__main__":
-main()
+    main()
