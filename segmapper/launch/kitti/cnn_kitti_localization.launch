@@ -9,7 +9,8 @@
   <rosparam command="load" file="$(find segmapper)/launch/kitti/cnn_kitti_localization.yaml"/>
 
  <!-- Target cloud -->
-  <arg name="target_cloud" value="/home/bhahn/.segmap/kitti/drive27_target_map.pcd"/>
+  <!-- <arg name="target_cloud" value="/home/bhahn/.segmap/kitti/drive27_target_map.pcd"/> -->
+  <arg name="target_cloud" value="/home/bhahn/segmap_ws/testmap2.pcd"/>
   <rosparam param="/SegMapper/SegMatchWorker/target_cloud_filename" subst_value="True">$(arg target_cloud)</rosparam>
 
   
