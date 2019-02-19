@@ -123,19 +123,6 @@ void SegMapper::publishMapThread() {
     for (size_t i = 0u; i < local_maps_.size(); ++i) {
       std::unique_lock<std::mutex> map_lock(local_maps_mutexes_[i]);
       local_maps += local_maps_[i].getFilteredPoints();
-      if (0 < local_maps.size()) {
-          std::cout << "Test for rgb values in point cloud (size: " << std::to_string(local_maps.size())
-                    << "): " << std::flush;
-          std::cout << "local_maps[0].x: " << std::to_string(local_maps[0].x) << std::endl;
-          std::cout << "local_maps[0].rgb: " << std::to_string(local_maps[0].rgb) << " which is rgb: ("
-                    << std::to_string(static_cast<uint32_t>(local_maps[0].rgb) >> 16 & 0xff) << ","
-                    << std::to_string(static_cast<uint32_t>(local_maps[0].rgb) >> 8 & 0xff) << ","
-                    << std::to_string(static_cast<uint32_t>(local_maps[0].rgb) & 0xff) << ") and r,g,b,a "
-                    << std::to_string(static_cast<uint32_t>(local_maps[0].r)) << ","
-                    << std::to_string(static_cast<uint32_t>(local_maps[0].g)) << ","
-                    << std::to_string(static_cast<uint32_t>(local_maps[0].b)) << ","
-                    << std::to_string(static_cast<uint32_t>(local_maps[0].a)) << "," << std::endl;
-      }
       map_lock.unlock();
     }
     sensor_msgs::PointCloud2 msg;

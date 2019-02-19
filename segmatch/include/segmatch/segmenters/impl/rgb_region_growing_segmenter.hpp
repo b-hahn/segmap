@@ -20,11 +20,14 @@ extern template class RGBRegionGrowingSegmenter<MapPoint>;
 //=================================================================================================
 
 template<typename ClusteredPointT>
-RGBRegionGrowingSegmenter<ClusteredPointT>::RGBRegionGrowingSegmenter(
-    const SegmenterParameters& params)
-    : params_(params), min_segment_size_(params.min_cluster_size),
-      max_segment_size_(params.max_cluster_size),
-      radius_for_growing_(params.radius_for_growing) { }
+RGBRegionGrowingSegmenter<ClusteredPointT>::RGBRegionGrowingSegmenter(const SegmenterParameters& params)
+  : params_(params)
+  , min_segment_size_(params.min_cluster_size)
+  , max_segment_size_(params.max_cluster_size)
+  , radius_for_growing_(params.radius_for_growing)
+  , distance_threshold_(params.rgb_region_growing_distance_threshold)
+  , point_color_threshold_(params.rgb_region_growing_point_color_threshold)
+  , region_color_threshold_(params.rgb_region_growing_region_color_threshold) {}
 
 template<typename ClusteredPointT>
 void RGBRegionGrowingSegmenter<ClusteredPointT>::segment(
@@ -54,10 +57,10 @@ void RGBRegionGrowingSegmenter<ClusteredPointT>::segment(
   reg.setInputCloud (cloud_ptr);
   reg.setIndices (indices/* use all points */);
   reg.setSearchMethod (tree);
-  reg.setDistanceThreshold (5);
-  reg.setPointColorThreshold (6);
-  reg.setRegionColorThreshold (5);
-  reg.setMinClusterSize (50);
+  reg.setDistanceThreshold (distance_threshold_);
+  reg.setPointColorThreshold (point_color_threshold_);
+  reg.setRegionColorThreshold (region_color_threshold_);
+  reg.setMinClusterSize (min_segment_size_);
 
   reg.extract (cluster_indices);
 

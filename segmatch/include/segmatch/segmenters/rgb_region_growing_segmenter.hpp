@@ -57,6 +57,9 @@ class RGBRegionGrowingSegmenter : public Segmenter<ClusteredPointT> {
   const int min_segment_size_;
   const int max_segment_size_;
   const float radius_for_growing_;
+  const int distance_threshold_;
+  const int point_color_threshold_;
+  const int region_color_threshold_;
 
 }; // class RGBRegionGrowingSegmenter
 

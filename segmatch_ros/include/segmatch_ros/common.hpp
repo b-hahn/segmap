@@ -193,6 +193,12 @@ static segmatch::SegMatchParams getSegMatchParams(const ros::NodeHandle& nh,
               params.segmenter_params.sc_smoothness_threshold_deg);
   nh.getParam(ns + "/Segmenters/sc_curvature_threshold",
               params.segmenter_params.sc_curvature_threshold);
+  nh.getParam(ns + "/Segmenters/RGBRegionGrowing/distance_threshold",
+              params.segmenter_params.rgb_region_growing_distance_threshold);
+  nh.getParam(ns + "/Segmenters/RGBRegionGrowing/point_color_threshold",
+              params.segmenter_params.rgb_region_growing_point_color_threshold);
+  nh.getParam(ns + "/Segmenters/RGBRegionGrowing/region_color_threshold",
+              params.segmenter_params.rgb_region_growing_region_color_threshold);
 
   // Classifier parameters.
   nh.getParam(ns + "/Classifier/classifier_filename",

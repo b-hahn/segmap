@@ -42,6 +42,12 @@ struct SegmenterParameters {
   // Parameters specific for the SmoothnessConstraint growing policy.
   float sc_smoothness_threshold_deg;
   float sc_curvature_threshold;
+  
+  // Parameters specific for the RGB regoin growing policy.
+  int rgb_region_growing_distance_threshold;
+  int rgb_region_growing_point_color_threshold;
+  int rgb_region_growing_region_color_threshold;
+
 }; // struct SegmenterParameters
 
 struct ClassifierParams {

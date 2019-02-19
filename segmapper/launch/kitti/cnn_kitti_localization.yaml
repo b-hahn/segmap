@@ -39,7 +39,7 @@ SegMapper: {
   distance_between_segmentations_m: 0.0,
 
   distance_to_lower_target_cloud_for_viz_m: 30.0,
-  align_target_map_on_first_loop_closure: false,
+  align_target_map_on_first_loop_closure: true,
   
   ratio_of_points_to_keep_when_publishing: 1.0,
   
@@ -74,7 +74,13 @@ SegMapper: {
       segmenter_type: "IncrementalEuclideanDistance", # IncrementalSmoothnessConstraints, SimpleSmoothnessConstraints
       min_cluster_size: 20,
       max_cluster_size: 15000,
-      radius_for_growing: 0.5
+      radius_for_growing: 0.8,
+
+      RGBRegionGrowing: {
+        distance_threshold: 10,
+        point_color_threshold: 6,
+        region_color_threshold: 5,
+      }
     },
 
     Descriptors: {
@@ -117,7 +123,7 @@ SegMapper: {
       add_m_estimator_on_odom: false,
       add_m_estimator_on_icp: false,
     
-      use_icp_factors: true, #Introducing ICP constraints will introduce a drift.
+      use_icp_factors: false, #Introducing ICP constraints will introduce a drift.
       use_odom_factors: true,
       nscan_to_match: 3,
       nscan_in_sub_map: 5,
