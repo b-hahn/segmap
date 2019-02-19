@@ -69,6 +69,6 @@ if __name__ == "__main__":
   args = parser.parse_args()
   try:
     cut(args.inbag, args.outbag, args.start, args.duration)
-  except Exception, e:
+  except (Exception, e):
     import traceback
-traceback.print_exc()
+    traceback.print_exc()
