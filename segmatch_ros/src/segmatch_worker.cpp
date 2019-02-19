@@ -525,6 +525,7 @@ bool SegMatchWorker::togglePublishTargetServiceCall(std_srvs::Empty::Request& re
   publish_target_ = !publish_target_;
   if (publish_target_) {
     LOG(INFO) << "Publish target set to true";
+    publishTargetRepresentation();
   } else {
     LOG(INFO) << "Publish target set to false";
   }
