@@ -181,7 +181,8 @@ class SegMatch {
 
   void getLoopClosures(std::vector<laser_slam::RelativePose>* loop_closures) const;
 
-  void alignTargetMap();
+  // void alignTargetMap(const laser_slam::Pose& latest_pose);
+  void alignTargetMap(const Eigen::Matrix4f& latest_pose);
 
   void displayTimings() const;
 
@@ -190,6 +191,10 @@ class SegMatch {
   void exportDescriptorsData() const { descriptors_->exportData(); };
 
   std::vector<database::MergeEvent> getMergeEvents() { return merge_events_; }
+
+  std::vector<std::unique_ptr<CorrespondenceRecognizer>>& getRecognizers() {
+    return recognizers_;
+  }
 
  private:
   laser_slam::Time findTimeOfClosestSegmentationPose(const segmatch::Segment& segment) const;

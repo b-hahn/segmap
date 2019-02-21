@@ -622,20 +622,39 @@ Time SegMatch::findTimeOfClosestSegmentationPose(const Segment& segment) const {
   return pose_times.at(nearest_neighbour_indices.at(0));
 }
 
-void SegMatch::alignTargetMap() {
-  segmented_source_clouds_[last_processed_source_cloud_].transform(last_transformation_.inverse());
+// void SegMatch::alignTargetMap(const laser_slam::Pose& latest_pose) {
+void SegMatch::alignTargetMap(const Eigen::Matrix4f& latest_pose) {
+  // TODO: probably faster to align source map to target map and not vice versa
+  // auto& pc = segmented_source_clouds_[last_processed_source_cloud_].begin()->second.getLastView().point_cloud;
+  auto& pc = segmented_target_cloud_.begin()->second.getLastView().point_cloud;
+  std::string red = "\033[0;31m";
+  std::string reset = "\033[0m";
+    std::cout << red << "before: "
+              << pc[20].x << ", " << pc[20].y << ", " << pc[20].z
+              << std::endl;
+    // std::cout << latest_pose.T_w.getTransformationMatrix() << std::endl;
+    // std::cout << latest_pose.T_w.getTransformationMatrix().inverse() << std::endl;
+    std::cout << latest_pose << std::endl;
+    // TODO: get a proper latest transformation (is that latest_pose? latest_pose.inverse?) Need to transfer the kindr SE3 to a Eigen Matrix4f
+    //   segmented_source_clouds_[last_processed_source_cloud_].transform(last_transformation_.inverse());
+    // segmented_target_cloud_.transform(latest_pose.T_w.getTransformationMatrix()/* .inverse() */.cast<float>());
+    segmented_target_cloud_.transform(latest_pose);
+    std::cout << "after: "
+              << pc[20].x << ", " << pc[20].y << ", " << pc[20].z
+              << pc[20].x << ", " << pc[20].y << ", " << pc[20].z
+              << reset << std::endl;
 
-  // Overwrite the old target.
-  classifier_->setTarget(segmented_target_cloud_);
+    // Overwrite the old target.
+    classifier_->setTarget(segmented_target_cloud_);
 
-  // Update the last filtered matches.
-  for (auto& match: last_filtered_matches_) {
-    Segment segment;
-    CHECK(segmented_source_clouds_.at(last_processed_source_cloud_).
-          findValidSegmentById(match.ids_.first, &segment));
-    match.centroids_.first = segment.getLastView().centroid;
-    CHECK(segmented_target_cloud_.findValidSegmentById(match.ids_.second, &segment));
-    match.centroids_.second = segment.getLastView().centroid;
+    // Update the last filtered matches.
+    for (auto& match : last_filtered_matches_) {
+        Segment segment;
+        CHECK(
+          segmented_source_clouds_.at(last_processed_source_cloud_).findValidSegmentById(match.ids_.first, &segment));
+        match.centroids_.first = segment.getLastView().centroid;
+        CHECK(segmented_target_cloud_.findValidSegmentById(match.ids_.second, &segment));
+        match.centroids_.second = segment.getLastView().centroid;
   }
 }
 

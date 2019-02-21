@@ -163,11 +163,25 @@ bool SegMatchWorker::processLocalMap(
       }
     } else if (params_.localize){
       if (!recognized_matches.empty() && !first_localization_occured_) {
+        for (auto& m : recognized_matches) {
+          std::cout << "distance between matches: ";
+          auto dist = m.getCentroids().second - m.getCentroids().first ;
+          std::cout << "(" << dist.x << ", " << dist.y<< ", " << dist.z << ")" << std::endl;
+
+        }
+
+        std::cout << "candidate_tranformations: " << std::endl;
+        for (auto& ct : segmatch_.getRecognizers()[track_id]->getCandidateTransformations()) {
+          std::cout << ct << std::endl;
+        }
+
+        //   fromApproximateTransformationMatrix(
+        // recognizer->getCandidateTransformations().front());
         first_localization_occured_ = true;
         if (params_.align_target_map_on_first_loop_closure) {
           BENCHMARK_BLOCK("SM.Worker.AlignTargetMap");
           LOG(INFO) << "Aligning target map.";
-          segmatch_.alignTargetMap();
+          segmatch_.alignTargetMap(/* latest_pose */segmatch_.getRecognizers()[track_id]->getCandidateTransformations().front().inverse());
           publishTargetRepresentation();
           publishTargetSegmentsCentroids();
         }
