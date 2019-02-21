@@ -11,10 +11,12 @@
 #include <pcl/point_cloud.h>
 
 #include "segmatch/point_extended.hpp"
+#include "segmatch/point_color_semantics.hpp"
 
 namespace segmatch {
 
-typedef segmatch::PointExtended MapPoint;
+// typedef segmatch::PointExtended MapPoint;
+typedef segmatch::PointColorSemantics MapPoint;
 typedef pcl::PointCloud<MapPoint> MapCloud;
 typedef pcl::PointXYZI PointI;
 typedef pcl::PointCloud<PointI> PointICloud;
@@ -24,7 +26,8 @@ typedef std::pair<PointI, PointI> PointIPair;
 typedef std::vector<PointIPair> PointIPairs;
 
 // typedef pcl::PointXYZ PclPoint;
-typedef pcl::PointXYZRGB PclPoint;
+// typedef pcl::PointXYZRGB PclPoint;
+typedef segmatch::PointColorSemantics PclPoint;
 typedef pcl::PointCloud<PclPoint> PointCloud;
 typedef PointCloud::Ptr PointCloudPtr;
 typedef std::pair<PclPoint, PclPoint> PointPair;

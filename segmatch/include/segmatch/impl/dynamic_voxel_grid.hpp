@@ -174,6 +174,7 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
   uint32_t old_points_count = 0u;
   uint32_t new_points_count = std::distance(data.points_begin, data.points_end);
   uint32_t centroid_r = 0, centroid_g = 0, centroid_b = 0;  //TODO(ben): uint32_t sufficiently large?
+  uint32_t centroid_semantics_r = 0, centroid_semantics_g = 0, centroid_semantics_b = 0;  //TODO(ben): uint32_t sufficiently large?
 
   // Add contribution from the existing voxel.
   if (data.old_voxel != nullptr) {
@@ -197,6 +198,13 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
       centroid_r *= old_points_count;
       centroid_g *= old_points_count;
       centroid_b *= old_points_count;
+
+      centroid_semantics_r = centroid.semantics_r;
+      centroid_semantics_g = centroid.semantics_g;
+      centroid_semantics_b = centroid.semantics_b;
+      centroid_semantics_r *= old_points_count;
+      centroid_semantics_g *= old_points_count;
+      centroid_semantics_b *= old_points_count;
     }
   }
   uint32_t total_points_count = old_points_count + new_points_count;
@@ -214,6 +222,10 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
       centroid_r += (point_rgb >> 16) & 0xff;
       centroid_g += (point_rgb >> 8) & 0xff;
       centroid_b += point_rgb & 0xff;
+
+      centroid_semantics_r = it->point.semantics_r;
+      centroid_semantics_g = it->point.semantics_g;
+      centroid_semantics_b = it->point.semantics_b;
       // centroid_r += it->point.r;
       // centroid_g += it->point.g;
       // centroid_b += it->point.b;
@@ -228,12 +240,18 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     centroid_r /= total_points_count;  //ben: divide by new total num of points
     centroid_g /= total_points_count;  //ben: sdivide by new total num of points
     centroid_b /= total_points_count;  //ben: divide by new total num of points
+    centroid_semantics_r /= total_points_count;
+    centroid_semantics_g /= total_points_count;
+    centroid_semantics_b /= total_points_count;
     // centroid.r = centroid_r;
     // centroid.g = centroid_g;
     // centroid.b = centroid_b;
     // std::cout << "new centroid_rgb: (" << centroid_r << "," << centroid_g << "," << centroid_b << ")" << std::endl;
     uint32_t output_rgb = ((uint32_t)centroid_r << 16 | (uint32_t)centroid_g << 8 | (uint32_t)centroid_b);
     centroid.rgb = *reinterpret_cast<float*>(&output_rgb);
+    centroid.semantics_r = centroid_semantics_r;
+    centroid.semantics_g = centroid_semantics_g;
+    centroid.semantics_b = centroid_semantics_b;
     // centroid.rgb = static_cast<float>((centroid_r << 16) | (centroid_g << 8) | centroid_b);
     // std::cout << "centroid.rgb (float): " << centroid.rgb
     //           << " and converted back r,g,b: " << ((static_cast<uint32_t>(centroid.rgb) >> 16) & 0xff) << ","
