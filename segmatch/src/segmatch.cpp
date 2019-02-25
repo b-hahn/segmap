@@ -149,6 +149,20 @@ void SegMatch::processCloud(MapCloud& cloud,
   std::vector<Id> segment_ids;
   std::vector<std::pair<Id, Id>> renamed_segments;
   std::vector<bool> is_point_modified(cloud.size(), false);
+  // std::cout << "Size of cloud before groundplane removal: " << cloud->size() << std::endl;
+
+  // MapCloud cloud_without_ground_plane;
+  // for (size_t i = 0u; i < cloud.size(); ++i) {
+  //   if (cloud.points[i].z > robot_height_m -
+  //       params_.ground_distance_to_robot_center_m) {
+  //     cloud_without_ground_plane.push_back(cloud.points[i]);
+  //   }
+  // }
+  // cloud_without_ground_plane.width = 1;
+  // cloud_without_ground_plane.height = cloud_without_ground_plane.points.size();
+  // cloud = cloud_without_ground_plane;
+
+  // std::cout << "Size of cloud after groundplane removal: " << cloud->size() << std::endl;
   std::cout << "Size of segmented PC 1: " << segmented_cloud->size() << std::endl;
   std::cout << "Segmenter type: " << params_.segmenter_params.segmenter_type << std::endl;
   if (cloud.size() > 0) {
@@ -604,6 +618,7 @@ Time SegMatch::findTimeOfClosestSegmentationPose(const Segment& segment) const {
   CHECK_GT(pose_times.size(), 0u);
 
   // Find the nearest pose to the segment within that window.
+  // TODO: verify that PointXYZRGB is all we need (or even PointXYZ) and not PointColorSemantics, e.g.
   pcl::KdTreeFLANN<PclPoint> kd_tree;
   PointCloudPtr pose_cloud_ptr(new PointCloud);
   pcl::copyPointCloud(pose_cloud, *pose_cloud_ptr);
@@ -671,6 +686,7 @@ void SegMatch::filterNearestSegmentsInCloud(SegmentedCloud& cloud, double minimu
   if (segment_ids.size() > 2u) {
     n_nearest_segments = std::min(static_cast<unsigned int>(segment_ids.size()), n_nearest_segments);
     // Set up nearest neighbour search.
+    // TODO: verify that PointXYZRGB is all we need (or even PointXYZ) and not PointColorSemantics, e.g.
     pcl::KdTreeFLANN<PclPoint> kdtree;
     PointCloudPtr centroid_cloud_ptr(new PointCloud);
     pcl::copyPointCloud(centroid_cloud, *centroid_cloud_ptr);

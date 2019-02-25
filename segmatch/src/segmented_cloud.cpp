@@ -210,6 +210,8 @@ bool SegmentedCloud::findNearestSegmentsToPoint(const PclPoint& point,
 
   if (segment_ids.size() >= n_nearest_segments) {
     // Set up nearest neighbour search.
+    // TODO: verify that PointXYZRGB is all we need (or even PointXYZ) and not PointColorSemantics, e.g.
+    // pcl::KdTreeFLANN<PclPoint> kdtree;
     pcl::KdTreeFLANN<PclPoint> kdtree;
     PointCloudPtr centroid_cloud_ptr(new PointCloud);
     pcl::copyPointCloud(centroid_cloud, *centroid_cloud_ptr);

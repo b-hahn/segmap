@@ -25,11 +25,6 @@
 struct _SegMatch_PointColorSemantics : public pcl::PointXYZRGB {
   using pcl::PointXYZRGB::data;
 
-  void print_data() {
-    std::cout <<  data[0];
-  }
-
-
   inline _SegMatch_PointColorSemantics(const _SegMatch_PointColorSemantics &p) {
     data[0] = p.x;
     data[1] = p.y;
@@ -50,7 +45,7 @@ struct _SegMatch_PointColorSemantics : public pcl::PointXYZRGB {
     ed_cluster_id = 0u;
     sc_cluster_id = 0u;
     rgb = 15329511.0f;  // TODO(ben): current equal to (233, 232, 231) for testing
-    semantics_rgb = 15329511;
+    semantics_rgb = 4237888;  //TODO: equals 64, 170, 64 for testing
   }
 
   // TODO: not sure if this is the right constructor. Should replace the PointXYZRGB(int r, int g, int b) constructor but make sure 1) semantics aren't needed here yet
@@ -63,7 +58,7 @@ struct _SegMatch_PointColorSemantics : public pcl::PointXYZRGB {
     ed_cluster_id = 0u;
     sc_cluster_id = 0u;
     rgb = 15329511.0f;  // TODO(ben): current equal to (233, 232, 231) for testing
-    semantics_rgb = 15329511;
+    semantics_rgb = 4237888;  //TODO: equals 64, 170, 64 for testing
   }
 
   friend std::ostream& operator << (std::ostream& os, const _SegMatch_PointColorSemantics& p) {
@@ -80,10 +75,6 @@ struct _SegMatch_PointColorSemantics : public pcl::PointXYZRGB {
     return result;
   }
 
-  // X, Y, Z components of the position of the point.
-  // Memory layout (4 x 4 bytes): [ x, y, z, _ ]
-  // PCL_ADD_POINT4D;
-  // PCL_ADD_RGB;
   // Cluster ID fields.
   // Memory layout (4 x 4 bytes): [ ed_cluster_id, sc_cluster_id, _, _ ]
   union {
@@ -93,6 +84,7 @@ struct _SegMatch_PointColorSemantics : public pcl::PointXYZRGB {
     };
     uint32_t data_c[4];
   };
+
   // Semantics fields.
   // Memory layout (4 x 4 bytes): [ ed_cluster_id, sc_cluster_id, _, _ ]
   union {
@@ -107,79 +99,6 @@ struct _SegMatch_PointColorSemantics : public pcl::PointXYZRGB {
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
-// struct _SegMatch_PointColorSemantics {
-//   inline _SegMatch_PointColorSemantics(const _SegMatch_PointColorSemantics &p)
-//     : data { p.x, p.y, p.z, 1.0f }, ed_cluster_id(p.ed_cluster_id),
-//       sc_cluster_id(p.sc_cluster_id) /*, r(p.r), g(p.g), b(p.b), a(p.a) */ , rgb(p.rgb), semantics_rgb(p.semantics_rgb) {
-//         // r = 55;//(static_cast<uint32_t>(p.rgb) >> 16) & 0xff;
-//         // g = 144; //(static_cast<uint32_t>(p.rgb) >> 8) & 0xff;
-//         // b = 145; //static_cast<uint32_t>(p.rgb) & 0xff;
-//         // r = p.r;
-//         // g = p.g;
-//         // b = p.b;
-//         // a = 255u;
-//   }
-
-//   inline _SegMatch_PointColorSemantics()
-//     : data{ 0.0f, 0.0f, 0.0f, 1.0f }
-//     , ed_cluster_id(0u)
-//     , sc_cluster_id(0u)
-//     // , r(222)
-//     // , g(222)
-//     // , b(222)
-//     // , a(255)
-//     , rgb(15329511.0f)  // TODO(ben): current equal to (233, 232, 231) for testing
-//     , semantics_rgb(15329511)  // TODO(ben): current equal to (233, 232, 231) for testing
-//     // , rgb(static_cast<float>((253 << 16) | (9 << 8) | (11)))  // TODO(ben): change this to something sensible
-//   {}
-
-//   // TODO: not sure if this is the right constructor. Should replace the PointXYZRGB(int r, int g, int b) constructor but make sure 1) semantics aren't needed here yet
-//   inline _SegMatch_PointColorSemantics(int r, int g, int b)
-//     : data{ 0.0f, 0.0f, 0.0f, 1.0f }
-//     , ed_cluster_id(0u)
-//     , sc_cluster_id(0u)
-//     // , r(222)
-//     // , g(222)
-//     // , b(222)
-//     // , a(255)
-//     , rgb(15329511.0f)  // TODO(ben): current equal to (233, 232, 231) for testing
-//     , semantics_rgb(15329511)  // TODO(ben): current equal to (233, 232, 231) for testing
-//     // , rgb(static_cast<float>((253 << 16) | (9 << 8) | (11)))  // TODO(ben): change this to something sensible
-//   {}
-
-//   friend std::ostream& operator << (std::ostream& os, const _SegMatch_PointColorSemantics& p) {
-//     return os << "x: "<< p.x << ", y: " << p.y << ", z: " << p.z
-//         << ", EuclideanDistance ID: " << p.ed_cluster_id
-//         << ", SmoothnessConstraints ID: " << p.sc_cluster_id;
-//   }
-
-//   // X, Y, Z components of the position of the point.
-//   // Memory layout (4 x 4 bytes): [ x, y, z, _ ]
-//   PCL_ADD_POINT4D;
-//   PCL_ADD_RGB;
-//   // Cluster ID fields.
-//   // Memory layout (4 x 4 bytes): [ ed_cluster_id, sc_cluster_id, _, _ ]
-//   union {
-//     struct {
-//       uint32_t ed_cluster_id;
-//       uint32_t sc_cluster_id;
-//     };
-//     uint32_t data_c[4];
-//   };
-//   // Semantics fields.
-//   // Memory layout (4 x 4 bytes): [ ed_cluster_id, sc_cluster_id, _, _ ]
-//   union {
-//     struct {
-//       uint8_t semantics_r;
-//       uint8_t semantics_g;
-//       uint8_t semantics_b;
-//     };
-//     // TODO: float or uint32_t?
-//     uint32_t semantics_rgb;
-//   };
-
-//   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-// };
 
 // Register the point type.
 POINT_CLOUD_REGISTER_POINT_STRUCT (_SegMatch_PointColorSemantics,
@@ -193,7 +112,7 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (_SegMatch_PointColorSemantics,
                                    (uint32_t, ed_cluster_id, ed_cluster_id)
                                    (uint32_t, sc_cluster_id, sc_cluster_id)
                                    (float, rgb, rgb)
-                                   (float, semantics_rgb, semantics_rgb)
+                                   (uint32_t, semantics_rgb, semantics_rgb)
 )
 
 namespace segmatch {

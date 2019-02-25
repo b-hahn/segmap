@@ -161,17 +161,31 @@ class DynamicVoxelGrid {
   struct Voxel_ {
     Voxel_()
       : centroid(nullptr), index(0), num_points(0) {
+        // TODO: change the size of the class counter to a config param depending on dataset used. This is currently set
+        // to work with mapillary vistas.
+        semantic_class_counter = std::vector<uint16_t>(64, 0);
+        // std::cout << "Created Voxel with semantic_class_counter.size() = " << semantic_class_counter.size() << std::endl;
     }
 
-    Voxel_(VoxelPointT* centroid, const IndexT& index, const uint32_t num_points)
-      : centroid(centroid), index(index), num_points(num_points) {
+    Voxel_(VoxelPointT* centroid, const IndexT& index, const uint32_t num_points, std::vector<uint16_t> semantic_class_counter)
+      : centroid(centroid), index(index), num_points(num_points), semantic_class_counter(semantic_class_counter) {
+      // semantic_class_counter = std::vector<uint8_t>(64, 0);
+        // std::cout << "Created Voxel with semantic_class_counter.size() = " << semantic_class_counter.size() << std::endl;
     }
 
     Voxel_(const Voxel_& other)
-      : centroid(other.centroid), index(other.index), num_points(other.num_points) {
+      : centroid(other.centroid)
+      , index(other.index)
+      , num_points(other.num_points)
+      , semantic_class_counter(other.semantic_class_counter)
+    {
+        // std::cout << "Created Voxel with semantic_class_counter.size() = " << semantic_class_counter.size()
+        //           << std::endl;
     }
 
     VoxelPointT* centroid;
+    // TODO: is uint16_t sufficiently large? Needs to be > than max number of points expected to be in a voxel
+    std::vector<uint16_t> semantic_class_counter;
     IndexT index;
     uint32_t num_points;
   };
@@ -195,6 +209,53 @@ class DynamicVoxelGrid {
   // Removes the centroids at the specified pointers. The pointers must be sorted in increasing
   // order.
   std::vector<bool> removeCentroids_(VoxelCloud& target_cloud, std::vector<VoxelPointT*> to_remove);
+
+  std::vector<uint8_t>& getMostFrequentClass(std::vector<uint16_t> counter) {
+    // find max element in old_voxel_->semantic_class_counter
+    uint8_t class_id = distance(counter.begin(), std::max_element(counter.begin(), counter.end()));
+    return class_id_to_color[class_id];
+  }
+  
+  // Converts an rgb color to a mapillary class id
+  std::map<std::vector<uint8_t>, uint8_t> color_to_class_id = {
+      { { 165, 42, 42 }, 0 },    { { 0, 192, 0 }, 1 },      { { 196, 196, 196 }, 2 },  { { 190, 153, 153 }, 3 },
+      { { 180, 165, 180 }, 4 },  { { 90, 120, 150 }, 5 },   { { 102, 102, 156 }, 6 },  { { 128, 64, 255 }, 7 },
+      { { 140, 140, 200 }, 8 },  { { 170, 170, 170 }, 9 },  { { 250, 170, 160 }, 10 }, { { 96, 96, 96 }, 11 },
+      { { 230, 150, 140 }, 12 }, { { 128, 64, 128 }, 13 },  { { 110, 110, 110 }, 14 }, { { 244, 35, 232 }, 15 },
+      { { 150, 100, 100 }, 16 }, { { 70, 70, 70 }, 17 },    { { 150, 120, 90 }, 18 },  { { 220, 20, 60 }, 19 },
+      { { 255, 0, 0 }, 20 },     { { 255, 0, 100 }, 21 },   { { 255, 0, 200 }, 22 },   { { 200, 128, 128 }, 23 },
+      { { 255, 255, 255 }, 24 }, { { 64, 170, 64 }, 25 },   { { 230, 160, 50 }, 26 },  { { 70, 130, 180 }, 27 },
+      { { 190, 255, 255 }, 28 }, { { 152, 251, 152 }, 29 }, { { 107, 142, 35 }, 30 },  { { 0, 170, 30 }, 31 },
+      { { 255, 255, 128 }, 32 }, { { 250, 0, 30 }, 33 },    { { 100, 140, 180 }, 34 }, { { 220, 220, 220 }, 35 },
+      { { 220, 128, 128 }, 36 }, { { 222, 40, 40 }, 37 },   { { 100, 170, 30 }, 38 },  { { 40, 40, 40 }, 39 },
+      { { 33, 33, 33 }, 40 },    { { 100, 128, 160 }, 41 }, { { 142, 0, 0 }, 42 },     { { 70, 100, 150 }, 43 },
+      { { 210, 170, 100 }, 44 }, { { 153, 153, 153 }, 45 }, { { 128, 128, 128 }, 46 }, { { 0, 0, 80 }, 47 },
+      { { 250, 170, 30 }, 48 },  { { 192, 192, 192 }, 49 }, { { 220, 220, 0 }, 50 },   { { 140, 140, 20 }, 51 },
+      { { 119, 11, 32 }, 52 },   { { 150, 0, 255 }, 53 },   { { 0, 60, 100 }, 54 },    { { 0, 0, 142 }, 55 },
+      { { 0, 0, 90 }, 56 },      { { 0, 0, 230 }, 57 },     { { 0, 80, 100 }, 58 },    { { 128, 64, 64 }, 59 },
+      { { 0, 0, 110 }, 60 },     { { 0, 0, 70 }, 61 },      { { 0, 0, 192 }, 62 },     { { 32, 32, 32 }, 63 },
+      { { 120, 10, 10 }, 64 },   { { 0, 0, 0 }, 65 }
+  };
+
+  std::map<uint8_t, std::vector<uint8_t>> class_id_to_color = {
+      { 0, { 165, 42, 42 } },    { 1, { 0, 192, 0 } },      { 2, { 196, 196, 196 } },  { 3, { 190, 153, 153 } },
+      { 4, { 180, 165, 180 } },  { 5, { 90, 120, 150 } },   { 6, { 102, 102, 156 } },  { 7, { 128, 64, 255 } },
+      { 8, { 140, 140, 200 } },  { 9, { 170, 170, 170 } },  { 10, { 250, 170, 160 } }, { 11, { 96, 96, 96 } },
+      { 12, { 230, 150, 140 } }, { 13, { 128, 64, 128 } },  { 14, { 110, 110, 110 } }, { 15, { 244, 35, 232 } },
+      { 16, { 150, 100, 100 } }, { 17, { 70, 70, 70 } },    { 18, { 150, 120, 90 } },  { 19, { 220, 20, 60 } },
+      { 20, { 255, 0, 0 } },     { 21, { 255, 0, 100 } },   { 22, { 255, 0, 200 } },   { 23, { 200, 128, 128 } },
+      { 24, { 255, 255, 255 } }, { 25, { 64, 170, 64 } },   { 26, { 230, 160, 50 } },  { 27, { 70, 130, 180 } },
+      { 28, { 190, 255, 255 } }, { 29, { 152, 251, 152 } }, { 30, { 107, 142, 35 } },  { 31, { 0, 170, 30 } },
+      { 32, { 255, 255, 128 } }, { 33, { 250, 0, 30 } },    { 34, { 100, 140, 180 } }, { 35, { 220, 220, 220 } },
+      { 36, { 220, 128, 128 } }, { 37, { 222, 40, 40 } },   { 38, { 100, 170, 30 } },  { 39, { 40, 40, 40 } },
+      { 40, { 33, 33, 33 } },    { 41, { 100, 128, 160 } }, { 42, { 142, 0, 0 } },     { 43, { 70, 100, 150 } },
+      { 44, { 210, 170, 100 } }, { 45, { 153, 153, 153 } }, { 46, { 128, 128, 128 } }, { 47, { 0, 0, 80 } },
+      { 48, { 250, 170, 30 } },  { 49, { 192, 192, 192 } }, { 50, { 220, 220, 0 } },   { 51, { 140, 140, 20 } },
+      { 52, { 119, 11, 32 } },   { 53, { 150, 0, 255 } },   { 54, { 0, 60, 100 } },    { 55, { 0, 0, 142 } },
+      { 56, { 0, 0, 90 } },      { 57, { 0, 0, 230 } },     { 58, { 0, 80, 100 } },    { 59, { 128, 64, 64 } },
+      { 60, { 0, 0, 110 } },     { 61, { 0, 0, 70 } },      { 62, { 0, 0, 192 } },     { 63, { 32, 32, 32 } },
+      { 64, { 120, 10, 10 } },   { 65, { 0, 0, 0 } }
+  };
 
   // The centroids of the voxels containing enough points.
   std::unique_ptr<VoxelCloud> active_centroids_;

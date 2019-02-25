@@ -170,6 +170,7 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     std::vector<Voxel_>& new_voxels, VoxelCloud& new_active_centroids,
     VoxelCloud& new_inactive_centroids) {
   VoxelPointT centroid;
+  std::vector<uint16_t> semantic_class_counter(64, 0);
   auto centroid_map = centroid.getVector3fMap();
   uint32_t old_points_count = 0u;
   uint32_t new_points_count = std::distance(data.points_begin, data.points_end);
@@ -180,31 +181,18 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
   if (data.old_voxel != nullptr) {
     centroid = *(data.old_voxel->centroid);
     old_points_count = data.old_voxel->num_points;
+    semantic_class_counter = data.old_voxel->semantic_class_counter;
     if (new_points_count != 0u) {
       centroid_map *= static_cast<float>(old_points_count);  //ben: multiply mean by old num pts
-      // float centroid_rgb = centroid.rgb;
-      // std::cout << "centroid_rgb: " << centroid_rgb << std::endl;
-      // centroid_r = centroid.r;
-      // centroid_g = centroid.g;
-      // centroid_b = centroid.b;;
       uint32_t centroid_rgb = *reinterpret_cast<int*>(&centroid.rgb);
+      
       centroid_r = (centroid_rgb >> 16) & 0xff;
       centroid_g = (centroid_rgb >> 8) & 0xff;
       centroid_b = centroid_rgb & 0xff;
-      // centroid_r = (static_cast<uint32_t>(centroid.rgb) >> 16) & 0x000000ff;
-      // centroid_g = (static_cast<uint32_t>(centroid.rgb) >> 8) & 0x000000ff;
-      // centroid_b = static_cast<uint32_t>(centroid.rgb) & 0x000000ff;
-      // std::cout << "old centroid_rgb: (" << centroid_r << "," << centroid_g << "," << centroid_b << ")" << std::endl;
+      
       centroid_r *= old_points_count;
       centroid_g *= old_points_count;
       centroid_b *= old_points_count;
-
-      centroid_semantics_r = centroid.semantics_r;
-      centroid_semantics_g = centroid.semantics_g;
-      centroid_semantics_b = centroid.semantics_b;
-      centroid_semantics_r *= old_points_count;
-      centroid_semantics_g *= old_points_count;
-      centroid_semantics_b *= old_points_count;
     }
   }
   uint32_t total_points_count = old_points_count + new_points_count;
@@ -214,51 +202,49 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
   if (new_points_count != 0u) {
     for (auto it = data.points_begin; it != data.points_end; ++it) {
       centroid_map += it->point.getVector3fMap();  //ben: add all new points
-      // std::cout << "new r: " << ((static_cast<uint32_t>(it->point.rgb) >> 16) & 0x000000ff) << "and centroid_b: " << centroid_b << std::endl;
-      // centroid_r += (static_cast<uint32_t>(it->point.rgb) >> 16) & 0x000000ff;
-      // centroid_g += (static_cast<uint32_t>(it->point.rgb) >> 8) & 0x000000ff;
-      // centroid_b += static_cast<uint32_t>(it->point.rgb) & 0x000000ff;
       uint32_t point_rgb = *reinterpret_cast<int*>(&it->point.rgb);
       centroid_r += (point_rgb >> 16) & 0xff;
       centroid_g += (point_rgb >> 8) & 0xff;
       centroid_b += point_rgb & 0xff;
 
-      centroid_semantics_r = it->point.semantics_r;
-      centroid_semantics_g = it->point.semantics_g;
-      centroid_semantics_b = it->point.semantics_b;
-      // centroid_r += it->point.r;
-      // centroid_g += it->point.g;
-      // centroid_b += it->point.b;
-      // centroid.rgb = it->point.rgb;
-      // TODO(ben): maybe add a function to PointExtended that return r, g and b? 
+      std::vector<uint8_t> semantics_color = { (it->point.semantics_rgb >> 16) & 0xff,
+                                               (it->point.semantics_rgb >> 8) & 0xff,
+                                               it->point.semantics_rgb & 0xff };
+      for (auto& c : semantics_color) {
+        std::cout << std::to_string(c) << ", ";
+      }
+      std::cout << std::endl;
+
+      int class_id = color_to_class_id[semantics_color];
+      std::cout << "class_id: " << class_id << std::endl;
+      semantic_class_counter[class_id] += 1;
+
+      std::cout << "semantic class counter" << std::endl;
+      for (auto& c : semantic_class_counter) {
+        std::cout << std::to_string(c) << ", ";
+      }
+      std::cout << std::endl;
       // TODO(ben): can I avoid having to do manual bookkeeping with rgb vs r,g,b?
       num_its++;
     }
-    centroid_map /= static_cast<float>(total_points_count);  //ben: divide by new total num of points
-    // std::cout << "centroid_r (" << centroid_r << ") / total_points_count (" << total_points_count
-              // << ") = " << centroid_r / total_points_count << std::endl;
+    centroid_map /= static_cast<float>(total_points_count);  //divide by new total num of points
+    
     centroid_r /= total_points_count;  //ben: divide by new total num of points
     centroid_g /= total_points_count;  //ben: sdivide by new total num of points
     centroid_b /= total_points_count;  //ben: divide by new total num of points
-    centroid_semantics_r /= total_points_count;
-    centroid_semantics_g /= total_points_count;
-    centroid_semantics_b /= total_points_count;
-    // centroid.r = centroid_r;
-    // centroid.g = centroid_g;
-    // centroid.b = centroid_b;
-    // std::cout << "new centroid_rgb: (" << centroid_r << "," << centroid_g << "," << centroid_b << ")" << std::endl;
+    
     uint32_t output_rgb = ((uint32_t)centroid_r << 16 | (uint32_t)centroid_g << 8 | (uint32_t)centroid_b);
     centroid.rgb = *reinterpret_cast<float*>(&output_rgb);
-    centroid.semantics_r = centroid_semantics_r;
-    centroid.semantics_g = centroid_semantics_g;
-    centroid.semantics_b = centroid_semantics_b;
-    // centroid.rgb = static_cast<float>((centroid_r << 16) | (centroid_g << 8) | centroid_b);
-    // std::cout << "centroid.rgb (float): " << centroid.rgb
-    //           << " and converted back r,g,b: " << ((static_cast<uint32_t>(centroid.rgb) >> 16) & 0xff) << ","
-    //           << ((static_cast<uint32_t>(centroid.rgb) >> 8) & 0xff) << ","
-    //           << ((static_cast<uint32_t>(centroid.rgb)) & 0xff) << " which should be " << centroid_r << ","
-    //           << centroid_g << "," << centroid_b << std::endl;
-    // std::cout << "num_its: " << num_its << std::endl;
+    
+    auto semantics_color = getMostFrequentClass(semantic_class_counter);
+
+    centroid.semantics_r = semantics_color[0];
+    centroid.semantics_g = semantics_color[1];
+    centroid.semantics_b = semantics_color[2];
+    
+    // debug code to visualize semantic segmentation colors instead of real RGB colors
+    // uint32_t output_rgb = ((uint32_t)semantics_color[0] << 16 | (uint32_t)semantics_color[1] << 8 | (uint32_t)semantics_color[2]);
+    // centroid.rgb = *reinterpret_cast<float*>(&output_rgb);
   }
 
   // Save centroid to the correct point cloud.
@@ -273,7 +259,7 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     centroid_pointer = &new_inactive_centroids.back();
   }
 
-  new_voxels.emplace_back(centroid_pointer, index, total_points_count);
+  new_voxels.emplace_back(centroid_pointer, index, total_points_count, semantic_class_counter);
   return is_new_voxel;
 }
 

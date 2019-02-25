@@ -17,6 +17,7 @@ SemanticKdTreeFLANN<PointT, Dist>::SemanticKdTreeFLANN(bool sorted)
   , param_k_(::flann::SearchParams(-1, epsilon_))
   , param_radius_(::flann::SearchParams(-1, epsilon_, sorted))
   , pcl::search::Search<PointT> ("KdTree", sorted)
+  // , point_representation_(new pcl::DefaultPointRepresentation<PointT>())
   , point_representation_(new pcl::SemanticPointRepresentation<PointT>())
 {
 }

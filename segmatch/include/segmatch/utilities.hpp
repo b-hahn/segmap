@@ -167,6 +167,7 @@ static PointCloud mapPoint2PointCloud(const MapCloud& map_cloud) {
         pcl_point.y = point.y;
         pcl_point.z = point.z;
         pcl_point.rgb = point.rgb;
+        pcl_point.semantics_rgb = point.semantics_rgb;
         point_cloud.points.push_back(pcl_point);
     }
     point_cloud.width = 1;
