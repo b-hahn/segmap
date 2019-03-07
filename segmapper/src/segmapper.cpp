@@ -102,12 +102,16 @@ SegMapper::SegMapper(ros::NodeHandle& n) : nh_(n) {
   if (segmatch_worker_params_.localize || segmatch_worker_params_.close_loops) {
     segmatch_worker_.init(n, segmatch_worker_params_, params_.number_of_robots);
   }
-  
+
   for (size_t i = 0u; i < laser_slam_workers_.size(); ++i) {
       skip_counters_.push_back(0u);
       first_points_received_.push_back(false);
   }
-}
+
+  boost::posix_time::ptime my_posix_time = ros::WallTime::now().toBoost();
+  pose_file_name = "localization_log_" + boost::posix_time::to_iso_extended_string(my_posix_time) + ".txt";
+  LOG(INFO) << "Logging localizations to " << pose_file_name;
+  }
 
 SegMapper::~SegMapper() {}
 
@@ -161,14 +165,16 @@ void SegMapper::segMatchThread() {
   ros::Duration sleep_duration(kSegMatchSleepTime_s);
 
   unsigned int n_loops = 0u;
+  int loc_counter = 0;
 
   while (ros::ok()) {
     // If all the tracks have been skipped consecutively, sleep for a bit to
     // free some CPU time.
-    if (skipped_tracks_count == laser_slam_workers_.size()) {
-      skipped_tracks_count = 0u;
-      sleep_duration.sleep();
-    }
+    // commented out to ensure localization happens whenever possible
+    // if (skipped_tracks_count == laser_slam_workers_.size()) {
+    //   skipped_tracks_count = 0u;
+    //   sleep_duration.sleep();
+    // }
 
     // Make sure that all the measurements in this loop iteration will get the same timestamp. This
     // makes it easier to plot the data.
@@ -203,6 +209,32 @@ void SegMapper::segMatchThread() {
     // Process the source cloud.
     if (segmatch_worker_params_.localize) {
       if (segmatch_worker_.processLocalMap(local_maps_[track_id], current_pose, track_id)) {
+          // TODO: check here to see if localized - count how often this happens, this should be the same as total number of clouds.
+          // might have to run bag at half speed
+          // num clouds = probably num calls of ScanCallback
+          // TODO: fix this to work with multiple robots/ laser_slam_workers (need to know which at what frame number
+          // the localization occurred for each robot)
+          CHECK(laser_slam_workers_.size() == 1) << "Number of robots (or laser_slam_workers) not equal to 1; no clear "
+                                                    "definition of current number of scans/frames.";
+          LOG(INFO) << "Succesful Localization! loc_counter = " << loc_counter
+                    << ", scan_cb_counter = " << laser_slam_workers_[0]->scan_cb_counter << "("
+                    << static_cast<float>(loc_counter) / laser_slam_workers_[0]->scan_cb_counter * 100
+                    << "% frames localized), ts = " << current_pose.time_ns;
+            // draw localization TF
+          Eigen::Matrix4f localization_pose = segmatch_worker_.getLatestLocalizationTransformation(track_id);
+          Eigen::Matrix4f map_pose = localization_pose * current_pose.T_w.getTransformationMatrix().cast<float>();
+          for (uint8_t r = 0; r < localization_pose.rows(); ++r) {
+            std::cout << std::setprecision(4) << localization_pose.block<1,4>(r, 0) << "\tand\t\t" << current_pose.T_w.getTransformationMatrix().block<1,4>(r, 0) << "\t-->\t\t"
+                      << map_pose.block<1,4>(r, 0) << std::endl;
+          }
+
+          pose_file.open(pose_file_name, std::ios_base::app);
+          pose_file << laser_slam_workers_[0]->scan_cb_counter << "\n";
+          pose_file << current_pose.time_ns + laser_slam_workers_[0]->returnBaseTimeNs() << "\n";
+          // pose_file << current_pose.T_w.getPosition() << "\n\n";
+          pose_file << map_pose.block<3,1>(0, 3) << "\n\n";
+          pose_file.close();
+          loc_counter++;
         if (!pose_at_last_localization_set_) {
           pose_at_last_localization_set_ = true;
           pose_at_last_localization_ = current_pose.T_w;

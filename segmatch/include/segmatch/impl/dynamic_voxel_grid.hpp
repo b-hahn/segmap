@@ -210,38 +210,38 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
       std::vector<uint8_t> semantics_color = { (it->point.semantics_rgb >> 16) & 0xff,
                                                (it->point.semantics_rgb >> 8) & 0xff,
                                                it->point.semantics_rgb & 0xff };
-      for (auto& c : semantics_color) {
-        std::cout << std::to_string(c) << ", ";
-      }
-      std::cout << std::endl;
+      // for (auto& c : semantics_color) {
+      //   std::cout << std::to_string(c) << ", ";
+      // }
+      // std::cout << std::endl;
 
       int class_id = color_to_class_id[semantics_color];
-      std::cout << "class_id: " << class_id << std::endl;
+      // std::cout << "class_id: " << class_id << std::endl;
       semantic_class_counter[class_id] += 1;
 
-      std::cout << "semantic class counter" << std::endl;
-      for (auto& c : semantic_class_counter) {
-        std::cout << std::to_string(c) << ", ";
-      }
-      std::cout << std::endl;
+      // std::cout << "semantic class counter" << std::endl;
+      // for (auto& c : semantic_class_counter) {
+      //   std::cout << std::to_string(c) << ", ";
+      // }
+      // std::cout << std::endl;
       // TODO(ben): can I avoid having to do manual bookkeeping with rgb vs r,g,b?
       num_its++;
     }
     centroid_map /= static_cast<float>(total_points_count);  //divide by new total num of points
-    
+
     centroid_r /= total_points_count;  //ben: divide by new total num of points
     centroid_g /= total_points_count;  //ben: sdivide by new total num of points
     centroid_b /= total_points_count;  //ben: divide by new total num of points
-    
+
     uint32_t output_rgb = ((uint32_t)centroid_r << 16 | (uint32_t)centroid_g << 8 | (uint32_t)centroid_b);
     centroid.rgb = *reinterpret_cast<float*>(&output_rgb);
-    
+
     auto semantics_color = getMostFrequentClass(semantic_class_counter);
 
     centroid.semantics_r = semantics_color[0];
     centroid.semantics_g = semantics_color[1];
     centroid.semantics_b = semantics_color[2];
-    
+
     // debug code to visualize semantic segmentation colors instead of real RGB colors
     // uint32_t output_rgb = ((uint32_t)semantics_color[0] << 16 | (uint32_t)semantics_color[1] << 8 | (uint32_t)semantics_color[2]);
     // centroid.rgb = *reinterpret_cast<float*>(&output_rgb);

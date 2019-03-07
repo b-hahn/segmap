@@ -43,13 +43,21 @@ class SegMatchWorker {
   void saveTimings() const {
     segmatch_.saveTimings();
   }
-  
+
   void publish();
-  
+
   void stopPublishing(unsigned int track_id) {
       publish_local_representation_[track_id] = false;
   }
-  
+
+  segmatch::PairwiseMatches getMatches() {
+    return segmatch_.getFilteredMatches();
+  }
+
+  Eigen::Matrix4f getLatestLocalizationTransformation(int track_id) {
+    return segmatch_.getRecognizers()[track_id]->getCandidateTransformations().front();
+  }
+
  private:
 
   void loadTargetCloud();

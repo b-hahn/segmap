@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <fstream>
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>

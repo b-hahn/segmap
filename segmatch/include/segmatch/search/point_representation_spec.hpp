@@ -98,16 +98,24 @@ template <typename PointDefault>
       virtual void copyToFloatArray(const segmatch::MapPoint& p, float* out) const
       {
           out[0] = p.x;
-          out[1] = p.y; 
+          out[1] = p.y;
           out[2] = p.z;
+
           // use hue instead of color
-          float hue = rgb_to_hue(p.r, p.g, p.b);
-        //   float hue = rgb_to_hue(127, 233, 87);
-        //   std::cout << "hue: " << hue << std::endl;
-          out[3] = hue;
-        //   std::cout << "in copyToFloatArray:" << std::to_string(p.rgb) << std::endl;
-        //   std::cout << "in copyToFloatArray:" << std::to_string(p.r) << ", " << std::to_string(p.g) << ", "
-        //             << std::to_string(p.b) << std::endl;
+          // float hue = rgb_to_hue(p.r, p.g, p.b);
+          // out[3] = hue;
+          // uint32_t semantic_rgb = ((uint32_t)p.semantics_r << 16 | (uint32_t)p.semantics_g << 8 | (uint32_t)p.semantics_b);
+          uint32_t semantic_rgb = ((uint32_t)111 << 16 | (uint32_t)112 << 8 | (uint32_t)113);
+          out[3] = *reinterpret_cast<float*>(&semantic_rgb);
+
+          // p.semantics_rgb is equal to the constructor default value here if the points I'm reading (or the map) don't
+          // contain the field 'semantics_rgb'
+          std::cout << "in copyToFloatArray semantic_rgb:" << std::to_string(p.semantics_rgb) << std::endl;
+          std::cout << "in copyToFloatArray rgb:" << std::to_string(p.rgb) << std::endl;
+          std::cout << "in copyToFloatArray out[3]:" << std::to_string(out[3]) << " or " << out[3] << " or "
+                    << std::to_string(semantic_rgb) << std::endl;
+          //   std::cout << "in copyToFloatArray:" << std::to_string(p.r) << ", " << std::to_string(p.g) << ", "
+          //             << std::to_string(p.b) << std::endl;
       }
 
       void printNumDims() const { std::cout << "num dims from inside class: " << nr_dimensions_ << std::endl; }

@@ -14,6 +14,7 @@
 #include <segmatch_ros/segmatch_worker.hpp>
 #include <std_srvs/Empty.h>
 #include <tf/transform_broadcaster.h>
+#include "boost/date_time/posix_time/posix_time.hpp"
 
 #include "segmapper/SaveMap.h"
 
@@ -99,12 +100,14 @@ class SegMapper {
   std::vector<unsigned int> skip_counters_;
   unsigned int deactivate_track_when_skipped_x_ = 5u;
   std::vector<bool> first_points_received_;
-  
+
   // Pose of the robot when localization occured. Used to compute statistics on dead-reckoning
   // distances.
   laser_slam::SE3 pose_at_last_localization_;
   bool pose_at_last_localization_set_ = false;
 
+  std::string pose_file_name;
+  std::ofstream pose_file;
 
   static constexpr laser_slam::Time kHeadDurationToExport_ns = 60000000000u;
 }; // SegMapper

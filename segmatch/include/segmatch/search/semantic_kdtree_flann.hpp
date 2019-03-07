@@ -14,7 +14,6 @@
 #include "segmatch/common.hpp"
 
 
-// TOD(ben): include custom distance struct
 // TODO(ben): some of this should go in the impl/*.hpp file
 namespace search {
 

@@ -162,29 +162,36 @@ bool SegMatchWorker::processLocalMap(
         segmatch_.transferSourceToTarget(track_id, latest_pose.time_ns);
       }
     } else if (params_.localize){
-      if (!recognized_matches.empty() && !first_localization_occured_) {
-        for (auto& m : recognized_matches) {
-          std::cout << "distance between matches: ";
-          auto dist = m.getCentroids().second - m.getCentroids().first ;
-          std::cout << "(" << dist.x << ", " << dist.y<< ", " << dist.z << ")" << std::endl;
+      if (!recognized_matches.empty() /* && !first_localization_occured_ */) {
+        // TODO: could store current pose to output file here
+        laser_slam::PointMatcher::TransformationParameters T;
+        T = latest_pose.T_w.getTransformationMatrix().cast<float>();
+        // LOG(INFO) << "latest pose in processLocalMap: " << T << " and timestamp: " << latest_pose.time_ns;
 
-        }
+        // for (auto& m : recognized_matches) {
+        //   std::cout << "distance between matches:\n";
+        //   auto dist = m.getCentroids().second - m.getCentroids().first;
+        //   std::cout << "(" << m.getCentroids().second.x << ", " << m.getCentroids().second.y << ", " <<  m.getCentroids().second.z << ")" << std::endl;
+        //   std::cout << "(" << m.getCentroids().first.x << ", " << m.getCentroids().first.y << ", " <<  m.getCentroids().first.z << ")" << std::endl;
+        //   std::cout << "(" << dist.x << ", " << dist.y<< ", " << dist.z << ")" << std::endl;
 
-        std::cout << "candidate_tranformations: " << std::endl;
-        for (auto& ct : segmatch_.getRecognizers()[track_id]->getCandidateTransformations()) {
-          std::cout << ct << std::endl;
-        }
+        // }
+
+        // std::cout << "candidate_transformations: " << std::endl;
+        // for (auto& ct : segmatch_.getRecognizers()[track_id]->getCandidateTransformations()) {
+        //   std::cout << ct << std::endl;
+        // }
 
         //   fromApproximateTransformationMatrix(
         // recognizer->getCandidateTransformations().front());
         first_localization_occured_ = true;
-        if (params_.align_target_map_on_first_loop_closure) {
-          BENCHMARK_BLOCK("SM.Worker.AlignTargetMap");
-          LOG(INFO) << "Aligning target map.";
-          segmatch_.alignTargetMap(/* latest_pose */segmatch_.getRecognizers()[track_id]->getCandidateTransformations().front().inverse());
-          publishTargetRepresentation();
-          publishTargetSegmentsCentroids();
-        }
+        // if (params_.align_target_map_on_first_loop_closure) {
+        //   BENCHMARK_BLOCK("SM.Worker.AlignTargetMap");
+        //   LOG(INFO) << "Aligning target map.";
+        //   segmatch_.alignTargetMap(/* latest_pose */segmatch_.getRecognizers()[track_id]->getCandidateTransformations().front().inverse());
+        //   publishTargetRepresentation();
+        //   publishTargetSegmentsCentroids();
+        // }
       }
     }
 

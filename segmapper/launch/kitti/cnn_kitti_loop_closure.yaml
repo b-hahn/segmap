@@ -78,7 +78,7 @@ SegMapper: {
     },
 
     Descriptors: {
-      descriptor_types: ["CNN", "EigenvalueBased"]
+      descriptor_types: ["CNN"]
     },
 
     Classifier: {
