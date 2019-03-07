@@ -177,10 +177,10 @@ bool SegMatchWorker::processLocalMap(
 
         // }
 
-        // std::cout << "candidate_transformations: " << std::endl;
-        // for (auto& ct : segmatch_.getRecognizers()[track_id]->getCandidateTransformations()) {
-        //   std::cout << ct << std::endl;
-        // }
+        std::cout << "candidate_transformations: " << std::endl;
+        for (auto& ct : segmatch_.getRecognizers()[track_id]->getCandidateTransformations()) {
+          std::cout << ct << std::endl;
+        }
 
         //   fromApproximateTransformationMatrix(
         // recognizer->getCandidateTransformations().front());
