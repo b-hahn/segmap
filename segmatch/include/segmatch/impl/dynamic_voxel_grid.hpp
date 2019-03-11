@@ -185,11 +185,11 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     if (new_points_count != 0u) {
       centroid_map *= static_cast<float>(old_points_count);  //ben: multiply mean by old num pts
       uint32_t centroid_rgb = *reinterpret_cast<int*>(&centroid.rgb);
-      
+
       centroid_r = (centroid_rgb >> 16) & 0xff;
       centroid_g = (centroid_rgb >> 8) & 0xff;
       centroid_b = centroid_rgb & 0xff;
-      
+
       centroid_r *= old_points_count;
       centroid_g *= old_points_count;
       centroid_b *= old_points_count;
@@ -234,7 +234,7 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     centroid_b /= total_points_count;  //ben: divide by new total num of points
 
     uint32_t output_rgb = ((uint32_t)centroid_r << 16 | (uint32_t)centroid_g << 8 | (uint32_t)centroid_b);
-    centroid.rgb = *reinterpret_cast<float*>(&output_rgb);
+    centroid.rgb = static_cast<float>(output_rgb);
 
     auto semantics_color = getMostFrequentClass(semantic_class_counter);
 
