@@ -57,7 +57,7 @@ class SegMapper {
     /// \brief Call back of the save_local_map service.
   bool saveLocalMapServiceCall(segmapper::SaveMap::Request& request,
                                segmapper::SaveMap::Response& response);
-  
+
  private:
   // Get ROS parameters.
   void getParameters();

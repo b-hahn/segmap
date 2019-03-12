@@ -31,7 +31,7 @@ struct SegmentView {
   pcl::PointCloud<PclPoint> point_cloud_to_publish;
   pcl::PointCloud<PclPoint> reconstruction;
   pcl::PointCloud<PclPoint> reconstruction_compressed;
-  
+
   Features features;
   PclPoint centroid = PclPoint(0,0,0);
   // Time at which the segment was created.
@@ -189,7 +189,7 @@ class SegmentedCloud {
   size_t getCloseSegmentPairsCount(float max_distance) const;
 
   void eraseSegmentById(Id id) { valid_segments_.erase(id); };
-  
+
   // TODO RD Solve the need for cleaning empty segments.
   void cleanEmptySegments();
 
@@ -201,7 +201,7 @@ class SegmentedCloud {
   // Create a new view when the number of points increased by this ratio.
   // Currently only used for exporting the run data.
   static constexpr double min_change_to_add_new_view = 1.10;
-  
+
   static constexpr unsigned int publish_every_x_points = 20;
 }; // class SegmentedCloud
 
@@ -263,7 +263,7 @@ Id SegmentedCloud::addSegment(const pcl::PointIndices& segment_to_add,
   // Copy points into segment.
   segment.getLastView().point_cloud.clear();
   segment.getLastView().point_cloud.reserve(segment_to_add.indices.size());
-  
+
   segment.getLastView().point_cloud_to_publish.clear();
   segment.getLastView().point_cloud_to_publish.reserve(segment_to_add.indices.size() / publish_every_x_points);
   unsigned int i = 0;

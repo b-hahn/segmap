@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <launch>
-  
+
   <arg name="respawn_value" default="false" /> <!-- boolean: true, false -->
-  
+
   <!-- ROS parameters -->
   <rosparam>use_sim_time: true</rosparam>
   <rosparam command="load" file="$(find segmapper)/launch/kitti/cnn_kitti_localization.yaml"/>
@@ -13,22 +13,22 @@
   <arg name="target_cloud" value="/home/bhahn/segmap_ws/testmap2.pcd"/>
   <rosparam param="/SegMapper/SegMatchWorker/target_cloud_filename" subst_value="True">$(arg target_cloud)</rosparam>
 
-  
+
   <!-- CNN model path -->
   <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64/"/>
   <rosparam param="/SegMapper/SegMatchWorker/SegMatch/Descriptors/cnn_model_path" subst_value="True">$(arg cnn_model_path)</rosparam>
-  
+
   <!-- Semantics nn path -->
   <arg name="semantics_nn_path" value="$(env HOME)/.segmap/trained_models/segmap64_semantics/"/>
   <rosparam param="/SegMapper/SegMatchWorker/SegMatch/Descriptors/semantics_nn_path" subst_value="True">$(arg semantics_nn_path)</rosparam>
-  
+
   <!-- segmapper node -->
   <include file="$(find segmapper)/launch/segmapper.launch">
     <arg name="icp_configuration_file" value="$(find segmapper)/launch/kitti/icp_dynamic_outdoor.yaml"/>
     <arg name="icp_input_filters_file" value="$(find segmapper)/launch/kitti/input_filters_outdoor.yaml"/>
   </include>
-  
+
     <!-- rosbag player node -->
 
- 
+
 </launch>

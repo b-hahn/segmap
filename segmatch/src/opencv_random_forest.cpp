@@ -170,12 +170,12 @@ PairwiseMatches OpenCvRandomForest::findCandidates(
         it_source != source_cloud.end(); ++it_source) {
 
       if (params_.do_not_use_cars) {
-        if (it_source->second.empty()) continue;  
+        if (it_source->second.empty()) continue;
         if (it_source->second.getLastView().semantic == 1u) continue;
       }
 
       Segment source_segment = it_source->second;
-      Eigen::MatrixXd features_source = 
+      Eigen::MatrixXd features_source =
           source_segment.getLastView().features.rotationInvariantFeaturesOnly().asEigenMatrix();
 
       VectorXf q;
@@ -197,7 +197,7 @@ PairwiseMatches OpenCvRandomForest::findCandidates(
 
       for (size_t i = 0u; i < n_nearest_neighbours; ++i) {
         if (indices[i] == 0) {
-          // TODO RD Sometimes all the indices are 0. Investigate this. 
+          // TODO RD Sometimes all the indices are 0. Investigate this.
           break;
         }
         if (source_segment.segment_id != target_segment_ids_[indices[i]]) {
@@ -293,11 +293,11 @@ void OpenCvRandomForest::setTarget(const SegmentedCloud& target_cloud) {
           ++n_non_empty_views;
       }
   }
-  
-  if (n_non_empty_views != target_cloud.getNumberOfValidSegments()) { 
+
+  if (n_non_empty_views != target_cloud.getNumberOfValidSegments()) {
       LOG(INFO) << "Some segments had empty views";
   }
-  
+
   target_matrix_.resize(n_non_empty_views,
                         params_.knn_feature_dim);
 
@@ -309,7 +309,7 @@ void OpenCvRandomForest::setTarget(const SegmentedCloud& target_cloud) {
         if (!it->second.empty()) {
             if(it->second.getLastView().semantic != 1u) {
                 ++n_non_car;
-            } 
+            }
         }
     }
     target_matrix_.resize(n_non_car,

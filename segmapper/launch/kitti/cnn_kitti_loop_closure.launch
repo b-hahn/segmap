@@ -3,23 +3,23 @@
 <launch>
   
   <arg name="respawn_value" default="false" /> <!-- boolean: true, false -->
-  
+
   <!-- ROS parameters -->
   <rosparam>use_sim_time: true</rosparam>
   <rosparam command="load" file="$(find segmapper)/launch/kitti/cnn_kitti_loop_closure.yaml"/>
-  
+
   <!-- CNN model path -->
   <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64/"/>
   <rosparam param="/SegMapper/SegMatchWorker/SegMatch/Descriptors/cnn_model_path" subst_value="True">$(arg cnn_model_path)</rosparam>
-  
+
   <!-- Semantics nn path -->
   <arg name="semantics_nn_path" value="$(env HOME)/.segmap/trained_models/segmap64_semantics/"/>
   <rosparam param="/SegMapper/SegMatchWorker/SegMatch/Descriptors/semantics_nn_path" subst_value="True">$(arg semantics_nn_path)</rosparam>
-  
+
   <!-- segmapper node -->
   <include file="$(find segmapper)/launch/segmapper.launch">
     <arg name="icp_configuration_file" value="$(find segmapper)/launch/kitti/icp_dynamic_outdoor.yaml"/>
     <arg name="icp_input_filters_file" value="$(find segmapper)/launch/kitti/input_filters_outdoor.yaml"/>
   </include>
- 
+
 </launch>

@@ -46,7 +46,7 @@ void SemanticSegmenter<ClusteredPointT>::segment(
   //       the point_representations specialization, add my L2_semantics method and leave it at that?
   pcl::IndicesPtr indices (new std::vector<int>(cloud.size()));
   std::iota(indices->begin(), indices->end(), 0);
-  
+
   std::vector<pcl::PointIndices> cluster_indices;
 
   // extract clusters using custom clustering

@@ -60,9 +60,9 @@ template <typename PointDefault>
 
     uint8_t max_index = std::distance(rgb.begin(), std::max_element(rgb.begin(), rgb.end()));
     uint8_t min_index = std::distance(rgb.begin(), std::min_element(rgb.begin(), rgb.end()));
-    
+
     float diff = (rgb[max_index] - rgb[min_index]);
-    
+
     // avoid overflow error
     if (diff < 0.000001) {
         return 0;
@@ -71,7 +71,7 @@ template <typename PointDefault>
     // if red has the max value     
     if (0 == max_index) {
         hue = (rgb[1] - rgb[2]) / diff * 60;
-    }       
+    }
     else if (1 == max_index) {
         hue = (2.0 + (rgb[2] - rgb[0]) / diff) * 60;
     }
@@ -83,7 +83,7 @@ template <typename PointDefault>
 
   }
 
-  // TODO: this class is for 4D color points, add one for 5D points (color + semantics) and 4D semantics points  
+  // TODO: this class is for 4D color points, add one for 5D points (color + semantics) and 4D semantics points
   template<>
   class SemanticPointRepresentation<segmatch::MapPoint> : public PointRepresentation<segmatch::MapPoint>
   {

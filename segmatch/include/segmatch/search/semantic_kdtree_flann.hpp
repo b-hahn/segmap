@@ -102,7 +102,7 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
     typedef ::flann::Index<Dist> FLANNIndex;
 
       /** \brief Default Constructor for KdTreeFLANN.
-    * \param[in] sorted set to true if the application that the tree will be used for requires sorted nearest neighbor indices (default). False otherwise. 
+    * \param[in] sorted set to true if the application that the tree will be used for requires sorted nearest neighbor indices (default). False otherwise.
     *
     * By setting sorted to false, the \ref radiusSearch operations will be faster.
     */
@@ -110,8 +110,8 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
 
     // TODO(ben): add other constructors?
 
-    /** \brief Destructor for KdTreeFLANN. 
-    * Deletes all allocated data arrays and destroys the kd-tree structures. 
+    /** \brief Destructor for KdTreeFLANN.
+    * Deletes all allocated data arrays and destroys the kd-tree structures.
     */
     virtual ~SemanticKdTreeFLANN ()
     {
@@ -168,14 +168,14 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
 
 
       /** \brief Search for all the nearest neighbors of the query point in a given radius (zero-copy).
-      * 
+      *
       * \attention This method does not do any bounds checking for the input index
       * (i.e., index >= cloud.points.size () || index < 0), and assumes valid (i.e., finite) data.
-      * 
-      * \param[in] index a \a valid index representing a \a valid query point in the dataset given 
-      * by \a setInputCloud. If indices were given in setInputCloud, index will be the position in 
+      *
+      * \param[in] index a \a valid index representing a \a valid query point in the dataset given
+      * by \a setInputCloud. If indices were given in setInputCloud, index will be the position in
       * the indices vector.
-      * 
+      *
       * \param[in] radius the radius of the sphere bounding all of p_q's neighbors
       * \param[out] k_indices the resultant indices of the neighboring points
       * \param[out] k_sqr_distances the resultant squared distances to the neighboring points
@@ -183,7 +183,7 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
       * 0 or to a number higher than the number of points in the input cloud, all neighbors in \a radius will be
       * returned.
       * \return number of neighbors found in radius
-      * 
+      *
       * \exception asserts in debug mode if the index is not between 0 and the maximum number of points
       */
       int radiusSearch (int index, double radius, std::vector<int> &k_indices,
@@ -199,7 +199,7 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
           assert (index >= 0 && index < static_cast<int> (indices_->size ()) && "Out-of-bounds error in radiusSearch!");
           return (radiusSearch (input_->points[(*indices_)[index]], radius, k_indices, k_sqr_distances, max_nn));
         }
-      }                     
+      }
 
     // simple euclidean clustering using custom distance for color & semantics. Based on PCL version.
       /** \brief Decompose a region of space into clusters based on the Euclidean distance between points
@@ -215,7 +215,7 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
   // template <typename PointT>
   void extractEuclideanClusters (
       const PointCloud &cloud, /* const boost::shared_ptr<segmatch::search::<PointT> > &tree,  */
-      float tolerance, std::vector<pcl::PointIndices> &clusters, 
+      float tolerance, std::vector<pcl::PointIndices> &clusters,
       unsigned int min_pts_per_cluster = 1, unsigned int max_pts_per_cluster = (std::numeric_limits<int>::max) ());
 
   protected:

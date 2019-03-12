@@ -132,7 +132,7 @@ bool ensureDirectoryExists(const std::string& directory) {
     }
   } else {
     LOG(ERROR) << "Directory '" << directory << "' starts with invalid character: '" <<
-        directory[0u] << "'"; 
+        directory[0u] << "'";
   }
   return false;
 }
@@ -233,7 +233,7 @@ bool exportPositions(const std::string& filename, const SegmentedCloud& segmente
   } else {
     LOG(ERROR) << "Could not open file " << filename << " for writing segment positions.";
     return false;
-  }	
+  }
 }
 
 bool exportFeatures(const std::string& filename, const SegmentedCloud& segmented_cloud,

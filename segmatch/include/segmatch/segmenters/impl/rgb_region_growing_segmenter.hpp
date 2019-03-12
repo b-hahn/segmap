@@ -47,7 +47,7 @@ void RGBRegionGrowingSegmenter<ClusteredPointT>::segment(
   // std::vector<pcl::PointIndices> input_cloud_indices;
   pcl::IndicesPtr indices (new std::vector<int>(cloud.size()));
   std::iota(indices->begin(), indices->end(), 0);
-  
+
   std::vector<pcl::PointIndices> cluster_indices;
   // pcl::extractEuclideanClusters<ClusteredPointT>(
   //     cloud, points_neighbors_provider.getPclSearchObject(), radius_for_growing_, cluster_indices,

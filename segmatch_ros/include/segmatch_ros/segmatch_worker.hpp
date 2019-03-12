@@ -126,7 +126,7 @@ class SegMatchWorker {
   unsigned int num_tracks_;
   unsigned int pub_counter_ = 0;
   segmatch::PairwiseMatches matches_;
-  
+
   std::vector<bool> publish_local_representation_;
 
   bool compress_when_publishing_ = false;

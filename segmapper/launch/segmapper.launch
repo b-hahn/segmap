@@ -5,7 +5,7 @@
   <arg name="icp_configuration_file" default="$(find segmapper)/launch/icp_dynamic_indoor.yaml"/>
   <!-- Input filters file -->
   <arg name="icp_input_filters_file" default="$(find segmapper)/launch/input_filters_indoor.yaml"/>
-  
+
   <!-- Enable callgrind profiling -->
   <arg name="enable_callgrind" default="false"/>
   <arg name="callgrind_ouput_path" value="/tmp/segmatch-callgrind.out"/>
