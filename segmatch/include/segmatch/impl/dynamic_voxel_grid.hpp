@@ -237,10 +237,13 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     centroid.rgb = static_cast<float>(output_rgb);
 
     auto semantics_color = getMostFrequentClass(semantic_class_counter);
+    LOG(INFO) << "auto semantics_color = " << std::to_string(semantics_color[0]) << " " << std::to_string(semantics_color[1]) << " " << std::to_string(semantics_color[2]);
 
-    centroid.semantics_r = semantics_color[0];
-    centroid.semantics_g = semantics_color[1];
-    centroid.semantics_b = semantics_color[2];
+    centroid.semantics_rgb = static_cast<uint32_t>((uint32_t)semantics_color[0] << 16 | (uint32_t)semantics_color[1] << 8 | (uint32_t)semantics_color[2]);
+
+    // centroid.semantics_r = semantics_color[0];
+    // centroid.semantics_g = semantics_color[1];
+    // centroid.semantics_b = semantics_color[2];
 
     // debug code to visualize semantic segmentation colors instead of real RGB colors
     // uint32_t output_rgb = ((uint32_t)semantics_color[0] << 16 | (uint32_t)semantics_color[1] << 8 | (uint32_t)semantics_color[2]);

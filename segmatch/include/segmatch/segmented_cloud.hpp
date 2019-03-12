@@ -278,6 +278,8 @@ Id SegmentedCloud::addSegment(const pcl::PointIndices& segment_to_add,
     segmentPoint.x = reference_cloud.points[index].x;
     segmentPoint.y = reference_cloud.points[index].y;
     segmentPoint.z = reference_cloud.points[index].z;
+    segmentPoint.rgb = reference_cloud.points[index].rgb;
+    segmentPoint.semantics_rgb = reference_cloud.points[index].semantics_rgb;
     segment.getLastView().point_cloud.points.push_back(segmentPoint);
     if (i % publish_every_x_points == 0) {
         segment.getLastView().point_cloud_to_publish.points.push_back(segmentPoint);

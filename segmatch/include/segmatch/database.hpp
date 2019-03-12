@@ -4,6 +4,7 @@
 #include <string>
 
 #include "segmatch/segmented_cloud.hpp"
+#include "segmatch/dynamic_voxel_grid.hpp"
 
 namespace segmatch {
 namespace database {

@@ -39,9 +39,9 @@ void SemanticSegmenter<ClusteredPointT>::segment(
   //TODO(ben): make_shared() creates deep copy - figure otu some other way to this that avoid copying
   typename pcl::PointCloud <ClusteredPointT>::Ptr cloud_ptr = cloud.makeShared();
   // TODO(ben): or set tree to points_neighbors_provider.getPclSearchObject()
-  // TODO: here, use an inherited version of KdTree that knows about my version of DefaultPointRepresentation 
+  // TODO: here, use an inherited version of KdTree that knows about my version of DefaultPointRepresentation
   //       which, moreover, is derived from pcl/search/kdtree and not pcl/kdtree/kdtree. The former is a wrapper for the latter
-  //       which additionally inherits the searc/search class. 
+  //       which additionally inherits the searc/search class.
   //       My SemanticKdtreeFLANN is a bit of a mess, contains stuff from all over. Could I maybe just inherit the pcl/search/kdtree, add
   //       the point_representations specialization, add my L2_semantics method and leave it at that?
   pcl::IndicesPtr indices (new std::vector<int>(cloud.size()));

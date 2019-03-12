@@ -68,7 +68,7 @@ template <typename PointDefault>
         return 0;
     }
 
-    // if red has the max value     
+    // if red has the max value
     if (0 == max_index) {
         hue = (rgb[1] - rgb[2]) / diff * 60;
     }

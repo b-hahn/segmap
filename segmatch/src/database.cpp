@@ -165,14 +165,33 @@ bool exportSegments(const std::string& filename, const SegmentedCloud& segmented
           } else {
             point_cloud = segment.views[i].point_cloud;
           }
+        uint8_t r, g, b;
+        uint8_t semantic_class;
           for (const auto& point : point_cloud) {
+            // reinterpret_cast as per PCL docs doesn't work here
+            uint32_t point_rgb = static_cast<uint32_t>(point.rgb);
+            r = (point_rgb >> 16) & 0xff;
+            g = (point_rgb >> 8) & 0xff;
+            b = point_rgb & 0xff;
+
+            // find semantic class id corresponding to semantics_r,g and b values
+            // LOG(INFO) << std::to_string(point.semantics_r) << ", " << std::to_string(point.semantics_g) << ", " << std::to_string(point.semantics_b);
+            LOG(INFO) << "in exportSegments: " << std::to_string(static_cast<uint32_t>(point.semantics_rgb));
+            // semantic_class = compute_color_to_class_id(point.semantics_r, point.semantics_g, point.semantics_b);
+            semantic_class = compute_color_to_class_id(point.semantics_rgb);
             output_file << segment.segment_id << " ";
             output_file << i << " "; // Index of the view.
             output_file << point.x << " ";
             output_file << point.y << " ";
-            output_file << point.z;
+            output_file << point.z << " ";
+            output_file << std::to_string(r) << " ";
+            output_file << std::to_string(g) << " ";
+            output_file << std::to_string(b) << " ";
+            output_file << std::to_string(semantic_class);
             output_file << std::endl;
           }
+        //   std::cout << "Point semantic class: " << std::to_string(semantic_class) << ", semantics_rgb" << std::to_string(point_cloud[0].semantics_rgb)
+                    // /* << ", " << std::to_string(point_cloud[0].semantics_g) << ", " << std::to_string(point_cloud[0].semantics_b) */ /* << *reinterpret_cast<const int *>(&point_cloud[0].rgb) */ << std::endl;
         }
       } else {
         PointCloud point_cloud;
