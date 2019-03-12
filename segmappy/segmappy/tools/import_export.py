@@ -27,6 +27,12 @@ def load_segments(folder=database_folder, filename="segments_database.csv"):
             id_changes.append(i)
 
     segments = np.split(points, id_changes)
+    segments_color = [sc[:, 3:6] for sc in segments]
+    segments_semantics = [sem[:, 6] for sem in segments]
+    segments = [s[:, :3] for s in segments]
+
+    # print("segments:\n", segments[0])
+    # print("segments_colors:\n", segments_color[0])
 
     segment_ids = [ids[0] for ids in np.split(segment_ids, id_changes)]
     duplicate_ids = [ids[0] for ids in np.split(duplicate_ids, id_changes)]
@@ -43,7 +49,7 @@ def load_segments(folder=database_folder, filename="segments_database.csv"):
         + str(np.unique(segment_ids).size)
         + " sequences"
     )
-    return segments, segment_ids, duplicate_ids
+    return segments, segment_ids, duplicate_ids, segments_color
 
 
 def load_segments_no_duplicates(

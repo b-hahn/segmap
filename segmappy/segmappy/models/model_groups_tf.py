@@ -4,7 +4,7 @@ import tensorflow as tf
 def init_model(input_shape, n_classes):
     with tf.name_scope("InputScope") as scope:
         cnn_input = tf.placeholder(
-            dtype=tf.float32, shape=(None,) + input_shape + (1,), name="input"
+            dtype=tf.float32, shape=(None,) + input_shape + (3,), name="input"
         )
 
     # base convolutional layers

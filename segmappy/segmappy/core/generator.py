@@ -43,7 +43,9 @@ class Generator(object):
             self.batch_ids, train=self.train
         )
 
-        batch_segments = batch_segments[:, :, :, :, None]
+        # TODO: can I leave this out? Why was adding an extra dimension previously needed?
+        # batch_segments = batch_segments[:, :, :, :, None]
+        # print("batch_segments.shape: ", batch_segments.shape)
         batch_classes = to_onehot(batch_classes, self.n_classes)
 
         return batch_segments, batch_classes

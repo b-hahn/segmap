@@ -49,6 +49,7 @@ else:
 preprocessor = get_default_preprocessor(config)
 
 segments = []
+segments_colors = []
 classes = np.array([], dtype=np.int)
 n_classes = 0
 duplicate_classes = np.array([], dtype=np.int)
@@ -59,7 +60,7 @@ runs = config.cnn_train_folders.split(",")
 for run in runs:
     dataset = get_default_dataset(config, run)
 
-    run_segments, _, run_classes, run_n_classes, _, _, _ = dataset.load(
+    run_segments, _, run_classes, run_n_classes, _, _, _, run_segments_colors = dataset.load(
         preprocessor=preprocessor
     )
     run_duplicate_classes = dataset.duplicate_classes
@@ -69,6 +70,8 @@ for run in runs:
     run_duplicate_classes += max_duplicate_class
 
     segments += run_segments
+    segments_colors += run_segments_colors
+
     classes = np.concatenate((classes, run_classes), axis=0)
     n_classes += run_n_classes
     duplicate_classes = np.concatenate(
@@ -215,7 +218,7 @@ train_ids = np.where(train_fold == 1)[0]
 test_ids = np.where(train_fold == 0)[0]
 
 # initialize preprocessor
-preprocessor.init_segments(segments, classes, train_ids=train_ids)
+preprocessor.init_segments(segments, classes, train_ids=train_ids, segments_colors=segments_colors)
 
 # save scaler mean in a csv
 if config.remove_mean:
