@@ -40,7 +40,8 @@ class Dataset(object):
         from ..tools.import_export import load_segments, load_positions, load_features
 
         # load all the csv files
-        self.segments, sids, duplicate_sids, self.segments_colors = load_segments(folder=self.folder)
+        self.segments, sids, duplicate_sids, self.segments_colors, self.segments_semantic_classes = load_segments(
+            folder=self.folder)
         self.positions, pids, duplicate_pids = load_positions(folder=self.folder)
         self.features, self.feature_names, fids, duplicate_fids = load_features(
             folder=self.folder
@@ -109,7 +110,8 @@ class Dataset(object):
             self.features,
             self.matches,
             self.labels_dict,
-            self.segments_colors
+            self.segments_colors,
+            self.segments_semantic_classes
         )
 
     def _remove_unchanged(self):
@@ -323,6 +325,7 @@ class Dataset(object):
 
         self.segments = [self.segments[i] for i in ordered_ids]
         self.segments_colors = [self.segments_colors[i] for i in ordered_ids]
+        self.segments_semantic_classes = [self.segments_semantic_classes[i] for i in ordered_ids]
         self.classes = self.classes[ordered_ids]
 
         if self.positions.size > 0:
@@ -336,7 +339,10 @@ class Dataset(object):
     # keep only segments and corresponding data where the keep parameter is true
     def _trim_data(self, keep):
         self.segments = [segment for (k, segment) in zip(keep, self.segments) if k]
-        self.segments_colors = [segment_color for (k, segment_color) in zip(keep, self.segments_colors) if k]
+        self.segments_colors = [segment_color for (
+            k, segment_color) in zip(keep, self.segments_colors) if k]
+        self.segments_semantic_classes = [segment_semantic_class for (
+            k, segment_semantic_class) in zip(keep, self.segments_semantic_classes) if k]
         self.classes = self.classes[keep]
 
         if self.positions.size > 0:

@@ -4,13 +4,16 @@ import tensorflow as tf
 def init_model(input_shape, n_classes):
     with tf.name_scope("InputScope") as scope:
         cnn_input = tf.placeholder(
-            dtype=tf.float32, shape=(None,) + input_shape + (3,), name="input"
+            dtype=tf.float32, shape=(None,) + input_shape + (4,), name="input"
         )
 
     # base convolutional layers
     y_true = tf.placeholder(dtype=tf.float32, shape=(None, n_classes), name="y_true")
 
     scales = tf.placeholder(dtype=tf.float32, shape=(None, 3), name="scales")
+
+    # TODO: add 66 as parameter
+    semantics = tf.placeholder(dtype=tf.float32, shape=(None, 66), name="semantics")
 
     training = tf.placeholder_with_default(
         tf.constant(False, dtype=tf.bool), shape=(), name="training"
@@ -58,7 +61,8 @@ def init_model(input_shape, n_classes):
     )
 
     flatten = tf.contrib.layers.flatten(inputs=conv3)
-    flatten = tf.concat([flatten, scales], axis=1, name="flatten")
+    flatten = tf.concat([flatten, semantics, scales], axis=1, name="flatten")
+    # TODO(ben): add semantics as one-hot vector here
 
     # classification network
     dense1 = tf.layers.dense(

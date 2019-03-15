@@ -49,7 +49,7 @@ def load_segments(folder=database_folder, filename="segments_database.csv"):
         + str(np.unique(segment_ids).size)
         + " sequences"
     )
-    return segments, segment_ids, duplicate_ids, segments_color
+    return segments, segment_ids, duplicate_ids, segments_color, segments_semantics
 
 
 def load_segments_no_duplicates(

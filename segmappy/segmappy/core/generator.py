@@ -38,8 +38,8 @@ class Generator(object):
         self._i = self._i + self.batch_size
         if self._i >= self.n_segments:
             self._i = 0
-
-        batch_segments, batch_classes = self.preprocessor.get_processed(
+        # TODO: either here or in segmappy_train_cnn, add option to dynamically feed either occ grid, color, semantics o rcolor + semantics
+        batch_segments, batch_classes, batch_semantic_classes = self.preprocessor.get_processed(
             self.batch_ids, train=self.train
         )
 
@@ -48,7 +48,17 @@ class Generator(object):
         # print("batch_segments.shape: ", batch_segments.shape)
         batch_classes = to_onehot(batch_classes, self.n_classes)
 
-        return batch_segments, batch_classes
+        # convert semantic class integer for each point in segment to (65,) vector containing counts of each class per segment
+        # segment_semantic_class_distribution = np.zeros((len(batch_segments), self.preprocessor.n_semantic_classes))
+        # for i in range(len(batch_segments)):
+        #     ss = np.bincount(np.int64(batch_segments[i, :, :, :, :].flatten()))
+        #     print("ss: ", ss)
+        #     # segment_semantic_class_distribution[i, batch_segments[i, :, :, :, all of these]]
+        # print("batch_segments.shape:", batch_segments.shape)
+
+        # remove semantic class from batch_segments array
+
+        return batch_segments, batch_classes, batch_semantic_classes
 
 
 class GeneratorFeatures(object):
