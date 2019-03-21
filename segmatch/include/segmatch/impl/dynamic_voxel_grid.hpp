@@ -233,11 +233,14 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     centroid_g /= total_points_count;  //ben: sdivide by new total num of points
     centroid_b /= total_points_count;  //ben: divide by new total num of points
 
-    uint32_t output_rgb = ((uint32_t)centroid_r << 16 | (uint32_t)centroid_g << 8 | (uint32_t)centroid_b);
-    centroid.rgb = static_cast<float>(output_rgb);
+    // uint32_t output_rgb = ((uint32_t)centroid_r << 16 | (uint32_t)centroid_g << 8 | (uint32_t)centroid_b);
+    // centroid.rgb = static_cast<float>(output_rgb);
+    centroid.r = centroid_r;
+    centroid.g = centroid_g;
+    centroid.b = centroid_b;
 
     auto semantics_color = getMostFrequentClass(semantic_class_counter);
-    LOG(INFO) << "auto semantics_color = " << std::to_string(semantics_color[0]) << " " << std::to_string(semantics_color[1]) << " " << std::to_string(semantics_color[2]);
+    // LOG(INFO) << "auto semantics_color = " << std::to_string(semantics_color[0]) << " " << std::to_string(semantics_color[1]) << " " << std::to_string(semantics_color[2]);
 
     centroid.semantics_rgb = static_cast<uint32_t>((uint32_t)semantics_color[0] << 16 | (uint32_t)semantics_color[1] << 8 | (uint32_t)semantics_color[2]);
 

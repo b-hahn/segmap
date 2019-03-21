@@ -65,7 +65,7 @@ void SegMatchWorker::init(ros::NodeHandle& nh, const SegMatchWorkerParams& param
 
   toggle_publish_target_service_ = nh.advertiseService(
       "toggle_publish_target", &SegMatchWorker::togglePublishTargetServiceCall, this);
-  
+
   export_target_map_ = nh.advertiseService(
       "export_target_map", &SegMatchWorker::exportTargetMap, this);
 
@@ -88,7 +88,7 @@ void SegMatchWorker::init(ros::NodeHandle& nh, const SegMatchWorkerParams& param
   for (unsigned int i = 0u; i < num_tracks_; ++i) {
       publish_local_representation_.push_back(true);
   }
-  
+
   BENCHMARK_RESET_ALL();
 }
 
@@ -447,8 +447,8 @@ bool SegMatchWorker::exportRunServiceCall(std_srvs::Empty::Request& req,
 
   if (params_.export_segments_and_matches) {
     // TODO RD clean if not needed.
-    //database::exportMatches("/tmp/online_matcher/run_" + acquisition_time + "_matches.csv",
-    //                        matches_database_);
+    database::exportMatches("/tmp/online_matcher/run_" + acquisition_time + "_matches.csv",
+                           matches_database_);
     database::exportSegmentsAndFeatures("/tmp/online_matcher/run_" + acquisition_time,
                                         segments_database_, true);
     database::exportPositions("/tmp/online_matcher/run_" + acquisition_time + "_positions.csv",
@@ -527,7 +527,7 @@ std::vector<size_t> getIndexesInDecreasingOrdering(const std::vector<T> &v) {
 bool SegMatchWorker::reconstructSegmentsServiceCall(std_srvs::Empty::Request& req,
                                                     std_srvs::Empty::Response& res) {
   publishTargetReconstruction();
-  return true;  
+  return true;
 }
 
 bool SegMatchWorker::toggleCompressionServiceCall(std_srvs::Empty::Request& req,
