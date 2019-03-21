@@ -369,7 +369,7 @@ with tf.Session(config=tf.ConfigProto(
                 train_accuracy += batch_accuracy
                 train_step += 1
             else:
-                batch_segments, batch_classes = gen_test.next()
+                batch_segments, batch_classes, batch_semantics = gen_test.next()
 
                 # calculate test loss and accuracy
                 summary, batch_loss, batch_loss_c, batch_loss_r, batch_accuracy, batch_prob = sess.run(
@@ -378,6 +378,7 @@ with tf.Session(config=tf.ConfigProto(
                         cnn_input: batch_segments,
                         y_true: batch_classes,
                         scales: preprocessor.last_scales,
+                        semantics: batch_semantics,
                     },
                 )
 

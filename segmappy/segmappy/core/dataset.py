@@ -211,7 +211,7 @@ class Dataset(object):
         groups = {}
         class_group = {}
 
-        for i, cls in enumerate(np.unique(unique_matches)):
+        for i, cls in enumerate(np.unique(np.concatenate(unique_matches))):
             groups[i] = [cls]
             class_group[cls] = i
 

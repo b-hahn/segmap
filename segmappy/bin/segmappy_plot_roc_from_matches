@@ -40,12 +40,14 @@ dataset = Dataset(
     require_relevance=0.05,
 )
 
-segments, positions, classes, n_classes, features, _, _ = dataset.load(
+segments, positions, classes, n_classes, features, _, _, segments_colors, segments_semantic_classes = dataset.load(
     preprocessor=preprocessor
 )
 duplicate_classes = dataset.duplicate_classes
 
-preprocessor.init_segments(segments, classes, positions=positions)
+preprocessor.init_segments(segments, classes, positions=positions,
+    segments_colors=segments_colors,
+    segments_semantic_classes=segments_semantic_classes)
 
 # get roc positive and negative pairs
 pair_ids, pair_labels = get_roc_pairs(
@@ -82,17 +84,18 @@ cnn_graph = tf.get_default_graph()
 cnn_input = cnn_graph.get_tensor_by_name("InputScope/input:0")
 scales = cnn_graph.get_tensor_by_name("scales:0")
 descriptor = cnn_graph.get_tensor_by_name("OutputScope/descriptor_read:0")
+semantics = cnn_graph.get_tensor_by_name("semantics:0")
 
 cnn_features = []
 with tf.Session() as sess:
     saver.restore(sess, tf.train.latest_checkpoint(config.cnn_model_folder))
 
     for batch in range(gen_test.n_batches):
-        batch_segments, _ = gen_test.next()
+        batch_segments, _, batch_semantics = gen_test.next()
 
         batch_descriptors = sess.run(
             descriptor,
-            feed_dict={cnn_input: batch_segments, scales: preprocessor.last_scales},
+            feed_dict={cnn_input: batch_segments, scales: preprocessor.last_scales, semantics: batch_semantics},
         )
 
         for batch_descriptor in batch_descriptors:
