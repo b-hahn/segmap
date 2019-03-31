@@ -129,8 +129,9 @@ std::vector<std::vector<float> > TensorflowGraphExecutor::batchExecuteGraph(
   return batch_output;
 }
 
+template <typename NN_INPUT>
 std::vector<std::vector<float> > TensorflowGraphExecutor::batchExecuteGraph(
-    const std::vector<Array3D>& inputs, const std::string& input_tensor_name,
+    const std::vector<NN_INPUT>& inputs, const std::string& input_tensor_name,
     const std::string& output_tensor_name) const {
   CHECK(!inputs.empty());
   Status status;
@@ -178,6 +179,73 @@ std::vector<std::vector<float> > TensorflowGraphExecutor::batchExecuteGraph(
   return batch_output;
 }
 
+/* std::vector<std::vector<float> > TensorflowGraphExecutor::batchExecuteGraph(
+    const std::vector<Array4D>& inputs, const std::string& input_tensor_name,
+    const std::string& output_tensor_name) const {
+  CHECK(!inputs.empty());
+  Status status;
+
+  // define the input placeholder
+  auto inputShape = TensorShape();
+  inputShape.AddDim((int64) inputs.size());
+  inputShape.AddDim((int64) inputs[0].container.size());
+  inputShape.AddDim((int64) inputs[0].container[0].size());
+  inputShape.AddDim((int64) inputs[0].container[0][0].size());
+  inputShape.AddDim((int64) 1u);
+  Tensor inputTensor(DT_FLOAT, inputShape);
+
+  // put values in the input tensor
+  auto inputTensorValues = inputTensor.tensor<float, 5>();
+  for (size_t i=0; i < inputs.size(); i++) {
+    for (size_t j=0; j < inputs[0].container.size(); j++) {
+      for (size_t k=0; k < inputs[0].container[0].size(); k++) {
+        for (size_t l=0; l < inputs[0].container[0][0].size(); l++) {
+            // TODO: check that this sets inputTensor to all 4 values (occupancy, r, g, b)
+          inputTensorValues(i, j, k, l, 0) = inputs[i].container[j][k][l];
+        }
+      }
+    }
+  }
+
+  Tensor outputTensor;
+  status = executeGraph(inputTensor, outputTensor, input_tensor_name, output_tensor_name);
+  if (!status.ok()) {
+    LOG(INFO) << status.error_message();
+    throw runtime_error("Error running inference in graph.");
+  }
+
+  auto outputTensorValues = outputTensor.tensor<float, 2>();
+
+  // Pass the results to the output output vector
+  std::vector<std::vector<float> > batch_output;
+  for (int i = 0; i < outputTensorValues.dimension(0); i++) {
+    std::vector<float> output;
+    for (int j = 0; j < outputTensorValues.dimension(1); j++) {
+      output.push_back(outputTensorValues(i, j));
+    }
+    batch_output.push_back(output);
+  }
+
+  return batch_output;
+} */
+
+template <typename NN_INPUT>
+void TensorflowGraphExecutor::batchFullForwardPass(
+    const std::vector<NN_INPUT> &inputs,
+    const std::string &input_tensor_name,
+    const std::vector<std::vector<float>> &scales,
+    const std::string &scales_tensor_name,
+    const std::string &descriptor_values_name,
+    const std::string &reconstruction_values_name,
+    std::vector<std::vector<float>> &descriptors,
+    std::vector<Array3D> &reconstructions,
+    const std::shared_ptr<std::vector<float>> semantic_segmentation,
+    const std::string &semantic_segmentation_tensor_name) const
+{
+    CHECK(false) << "Not implemented - use template specialization for Array3D or Array4D";
+}
+
+template <>
 void TensorflowGraphExecutor::batchFullForwardPass(
     const std::vector<Array3D>& inputs,
     const std::string& input_tensor_name,
@@ -186,7 +254,9 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     const std::string& descriptor_values_name,
     const std::string& reconstruction_values_name,
     std::vector<std::vector<float> >& descriptors,
-    std::vector<Array3D>& reconstructions) const {
+    std::vector<Array3D>& reconstructions,
+    const std::shared_ptr<std::vector<float>> semantic_segmentation,
+    const std::string& semantic_segmentation_tensor_name) const {
   CHECK(!inputs.empty());
   descriptors.clear();
   reconstructions.clear();
@@ -226,9 +296,152 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     }
   }
 
+    // TODO: can remove semantic_segmentation from the Array3D overload, right?
+    auto semantic_segmentation_shape = TensorShape();
+    semantic_segmentation_shape.AddDim((int64) inputs.size());
+    semantic_segmentation_shape.AddDim(1u);
+    //semantic_segmentation_shape.AddDim(1u);
+    Tensor semantic_segmentation_tensor(DT_FLOAT, semantic_segmentation_shape);
+
+  if (semantic_segmentation != nullptr) {
+    // put values in the input tensor
+    auto semantic_segmentation_tensor_values = semantic_segmentation_tensor.tensor<float, 1>();
+    for (size_t i=0; i < semantic_segmentation->size(); i++) {
+        semantic_segmentation_tensor_values(i) = (*semantic_segmentation)[i];
+    }
+  }
+
   std::vector<Tensor> output_tensors;
+  std::vector<std::pair<std::string, tensorflow::Tensor>> feedDict;
+  if (semantic_segmentation == nullptr) {
+      feedDict = { { input_tensor_name, inputTensor }, { scales_tensor_name, scales_tensor } };
+  } else {
+      feedDict = { { input_tensor_name, inputTensor },
+                   { scales_tensor_name, scales_tensor },
+                   { semantic_segmentation_tensor_name, semantic_segmentation_tensor } };
+  }
   Status status = this->executeGraph(
-      {{input_tensor_name, inputTensor}, {scales_tensor_name, scales_tensor}},
+      feedDict,
+      {descriptor_values_name, reconstruction_values_name},
+      output_tensors);
+
+  if (!status.ok()) {
+      LOG(INFO) << status.error_message();
+  }
+  CHECK(status.ok());
+  CHECK_EQ(output_tensors.size(), 2u);
+
+  auto descriptor_values = output_tensors[0].tensor<float, 2>();
+  auto reconstruction_values = output_tensors[1].tensor<float, 5>();
+
+  CHECK_EQ(descriptor_values.dimension(0), reconstruction_values.dimension(0));
+  CHECK_EQ(descriptor_values.dimension(0), inputs.size());
+
+  const unsigned int batch_size =  inputs.size();
+  std::vector<float> descriptor;
+  Array3D reconstruction(inputs[0].container.size(),
+                         inputs[0].container[0].size(),
+                         inputs[0].container[0][0].size());
+  for (unsigned int i = 0u; i < batch_size; ++i) {
+    descriptor.clear();
+    for (int j = 0; j < descriptor_values.dimension(1); j++) {
+      descriptor.push_back(descriptor_values(i, j));
+    }
+
+    for (size_t j=0; j < inputs[0].container.size(); j++) {
+      for (size_t k=0; k < inputs[0].container[0].size(); k++) {
+        for (size_t l=0; l < inputs[0].container[0][0].size(); l++) {
+          reconstruction.container[j][k][l] = reconstruction_values(i, j, k, l, 0);
+        }
+      }
+    }
+
+    descriptors.push_back(descriptor);
+    reconstructions.push_back(reconstruction);
+  }
+}
+
+template <>
+void TensorflowGraphExecutor::batchFullForwardPass(
+    const std::vector<Array4D>& inputs,
+    const std::string& input_tensor_name,
+    const std::vector<std::vector<float> >& scales,
+    const std::string& scales_tensor_name,
+    const std::string& descriptor_values_name,
+    const std::string& reconstruction_values_name,
+    std::vector<std::vector<float> >& descriptors,
+    std::vector<Array3D>& reconstructions,
+    const std::shared_ptr<std::vector<float>> semantic_segmentation,
+    const std::string& semantic_segmentation_tensor_name) const {
+  CHECK(!inputs.empty());
+  descriptors.clear();
+  reconstructions.clear();
+
+  // define the input placeholder
+  auto inputShape = TensorShape();
+  inputShape.AddDim((int64) inputs.size());
+  inputShape.AddDim((int64) inputs[0].container.size());
+  inputShape.AddDim((int64) inputs[0].container[0].size());
+  inputShape.AddDim((int64) inputs[0].container[0][0].size());
+  inputShape.AddDim((int64) 4u);
+  Tensor inputTensor(DT_FLOAT, inputShape);
+
+  // put values in the input tensor
+  auto inputTensorValues = inputTensor.tensor<float, 5>();
+  for (size_t i=0; i < inputs.size(); i++) {
+    for (size_t j=0; j < inputs[0].container.size(); j++) {
+      for (size_t k=0; k < inputs[0].container[0].size(); k++) {
+        for (size_t l=0; l < inputs[0].container[0][0].size(); l++) {
+            // TODO: adapt to 4D
+          inputTensorValues(i, j, k, l, 0) = inputs[i].container[j][k][l][0];
+          inputTensorValues(i, j, k, l, 1) = inputs[i].container[j][k][l][1];
+          inputTensorValues(i, j, k, l, 2) = inputs[i].container[j][k][l][2];
+          inputTensorValues(i, j, k, l, 3) = inputs[i].container[j][k][l][3];
+        }
+      }
+    }
+  }
+
+  auto scales_shape = TensorShape();
+  scales_shape.AddDim((int64) inputs.size());
+  scales_shape.AddDim(3u);
+  //scales_shape.AddDim(1u);
+  Tensor scales_tensor(DT_FLOAT, scales_shape);
+
+  // put values in the input tensor
+  auto scales_tensor_values = scales_tensor.tensor<float, 2>();
+  for (size_t i=0; i < scales.size(); i++) {
+    for (size_t j=0; j < scales[0].size(); j++) {
+      scales_tensor_values(i, j) = scales[i][j];
+    }
+  }
+
+    // TODO: probably don't need vector of vectors here since semantic_segmentation is only a int value and not 3 ints like scales?
+    auto semantic_segmentation_shape = TensorShape();
+    semantic_segmentation_shape.AddDim((int64) inputs.size());
+    semantic_segmentation_shape.AddDim(1u);
+    //semantic_segmentation_shape.AddDim(1u);
+    Tensor semantic_segmentation_tensor(DT_FLOAT, semantic_segmentation_shape);
+
+  if (semantic_segmentation != nullptr) {
+    // put values in the input tensor
+    auto semantic_segmentation_tensor_values = semantic_segmentation_tensor.tensor<float, 1>();
+    for (size_t i=0; i < semantic_segmentation->size(); i++) {
+        semantic_segmentation_tensor_values(i) = (*semantic_segmentation)[i];
+    }
+  }
+
+  std::vector<Tensor> output_tensors;
+  std::vector<std::pair<std::string, tensorflow::Tensor>> feedDict;
+  if (semantic_segmentation == nullptr) {
+      feedDict = { { input_tensor_name, inputTensor }, { scales_tensor_name, scales_tensor } };
+  } else {
+      feedDict = { { input_tensor_name, inputTensor },
+                   { scales_tensor_name, scales_tensor },
+                   { semantic_segmentation_tensor_name, semantic_segmentation_tensor } };
+  }
+  Status status = this->executeGraph(
+      feedDict,
       {descriptor_values_name, reconstruction_values_name},
       output_tensors);
 
