@@ -21,7 +21,11 @@ class Descriptor {
   virtual void describe(const Segment& segment, Features* features) = 0;
 
   /// \brief Describe the whole segmented cloud at once.
-  virtual void describe(SegmentedCloud* segmented_cloud_ptr) = 0;
+  virtual void describe(SegmentedCloud* segmented_cloud_ptr
+         /* , bool use_color, bool use_semantic_segmentation */) = 0;
+
+  virtual void describe(SegmentedCloud* segmented_cloud_ptr, bool use_color, bool use_semantic_segmentation) {};
+
 
   /// \brief Get the descriptor's dimension.
   virtual unsigned int dimension() const = 0;
@@ -32,7 +36,8 @@ class Descriptor {
 class Descriptors {
  public:
   Descriptors();
-  explicit Descriptors(const DescriptorsParameters& parameters);
+//   explicit Descriptors(const DescriptorsParameters& parameters);
+  explicit Descriptors(const DescriptorsParameters& parameters, bool use_color = false, bool use_semantic_segmentation = false);
   ~Descriptors();
 
   /// \brief Describe the segment by modifying its internal Features object.
@@ -54,6 +59,8 @@ class Descriptors {
 
  private:
   std::vector<std::unique_ptr<Descriptor> > descriptors_;
+  bool use_color_ = false;
+  bool use_semantic_segmentation_ = false;
 }; // class Descriptors
 
 } // namespace segmatch
