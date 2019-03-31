@@ -7,13 +7,14 @@
 #include "segmatch/descriptors/descriptors.hpp"
 #include "segmatch/parameters.hpp"
 #include "segmatch/segmented_cloud.hpp"
+#include "segmatch/dynamic_voxel_grid.hpp"
 
 namespace segmatch {
 
 class CNNDescriptor : public Descriptor {
  public:
   //AutoencoderDescriptor () {};
-  explicit CNNDescriptor(const DescriptorsParameters& parameters) : params_(parameters) {
+  explicit CNNDescriptor(const DescriptorsParameters& parameters, bool use_color, bool use_semantic_segmentation) : params_(parameters) {
     const std::string model_folder = parameters.cnn_model_path;
     const std::string semantics_nn_folder = parameters.semantics_nn_path;
 
@@ -51,8 +52,14 @@ class CNNDescriptor : public Descriptor {
   /// \brief Describe the segment by modifying a Features object.
   virtual void describe(const Segment& segment, Features* features);
 
-  /// \brief Overrides the normal segmented cloud iterative description to be more efficient.
   virtual void describe(SegmentedCloud* segmented_cloud_ptr);
+
+  /// \brief Overrides the normal segmented cloud iterative description to be more efficient.
+  virtual void describe(SegmentedCloud* segmented_cloud_ptr, bool use_color, bool use_semantic_segmentation);
+
+  void describe4D(SegmentedCloud* segmented_cloud_ptr);
+
+  void describe3D(SegmentedCloud* segmented_cloud_ptr);
 
   /// \brief Get the descriptor's dimension.
   virtual unsigned int dimension() const { return kDimension; };
@@ -73,17 +80,17 @@ class CNNDescriptor : public Descriptor {
   segmatch::SegmentedCloud aligned_segments_;
 
   constexpr static float min_voxel_size_m_ = 0.1;
-  
+
   constexpr static unsigned int n_voxels_x_dim_ = 32u;
   constexpr static unsigned int n_voxels_y_dim_ = 32u;
   constexpr static unsigned int n_voxels_z_dim_ = 16u;
   constexpr static unsigned int cnn_input_dim_ = n_voxels_x_dim_ * n_voxels_y_dim_ *
       n_voxels_z_dim_;
-      
+
   constexpr static float min_x_scale_m_ = static_cast<float>(n_voxels_x_dim_) * min_voxel_size_m_;
   constexpr static float min_y_scale_m_ = static_cast<float>(n_voxels_y_dim_) * min_voxel_size_m_;
   constexpr static float min_z_scale_m_ = static_cast<float>(n_voxels_z_dim_) * min_voxel_size_m_;
-  
+
   constexpr static float x_dim_min_1_ = static_cast<float>(n_voxels_x_dim_) - 1.0;
   constexpr static float y_dim_min_1_ = static_cast<float>(n_voxels_y_dim_) - 1.0;
   constexpr static float z_dim_min_1_ = static_cast<float>(n_voxels_z_dim_) - 1.0;
@@ -96,6 +103,7 @@ class CNNDescriptor : public Descriptor {
   const std::string kFeaturesTensorName = "OutputScope/descriptor_read";
   const std::string kSemanticsOutputName = "OutputScope/output_read";
   const std::string kReconstructionTensorName = "ReconstructionScopeAE/ae_reconstruction_read";
+  const std::string kSemanticSegmentationTensorName = "semantic_segmentation";
   const std::string kScalesTensorName = "scales";
 
 }; // class CNNDescriptor
