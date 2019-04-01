@@ -59,6 +59,7 @@ duplicate_ids = np.array([], dtype=np.int)
 
 runs = config.cnn_train_folders.split(",")
 for run in runs:
+    print(run)
     dataset = get_default_dataset(config, run)
 
     run_segments, _, run_classes, run_n_classes, _, _, _, run_segments_colors, run_segments_semantic_classes = dataset.load(
@@ -271,7 +272,7 @@ if config.retrain:
     saver = tf.train.import_meta_graph(config.retrain + ".meta")
 else:
     # define a new model
-    init_model(tuple(preprocessor.voxels), n_classes)
+    init_model(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
 
     # model saver
     saver = tf.train.Saver(max_to_keep=config.checkpoints)
@@ -305,6 +306,7 @@ with tf.Session(config=tf.ConfigProto(
       allow_soft_placement=True)) as sess:
     # tensorboard statistics
     if config.log_name:
+        print("logging to ", config.log_path, config.log_name)
         train_writer = tf.summary.FileWriter(
             os.path.join(config.log_path, config.log_name, "train"), sess.graph
         )

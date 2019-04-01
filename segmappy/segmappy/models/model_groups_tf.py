@@ -1,18 +1,24 @@
 import tensorflow as tf
 
 # define the cnn model
-def init_model(input_shape, n_classes):
+def init_model(input_shape, n_classes, use_color, use_semantics):
     with tf.name_scope("InputScope") as scope:
-        cnn_input = tf.placeholder(
-            dtype=tf.float32, shape=(None,) + input_shape + (4,), name="input"
-        )
+        if use_color:
+            cnn_input = tf.placeholder(
+                dtype=tf.float32, shape=(None,) + input_shape + (4,), name="input"
+            )
+        else:
+            cnn_input = tf.placeholder(
+                dtype=tf.float32, shape=(None,) + input_shape + (1,), name="input"
+            )
+
 
     # base convolutional layers
     y_true = tf.placeholder(dtype=tf.float32, shape=(None, n_classes), name="y_true")
 
     scales = tf.placeholder(dtype=tf.float32, shape=(None, 3), name="scales")
 
-    # TODO: add 66 as parameter
+    # TODO: add 66 (num mapillary vistas classes) as parameter
     semantics = tf.placeholder(dtype=tf.float32, shape=(None, 66), name="semantics")
 
     training = tf.placeholder_with_default(
@@ -61,7 +67,10 @@ def init_model(input_shape, n_classes):
     )
 
     flatten = tf.contrib.layers.flatten(inputs=conv3)
-    flatten = tf.concat([flatten, semantics, scales], axis=1, name="flatten")
+    if use_semantics:
+        flatten = tf.concat([flatten, semantics, scales], axis=1, name="flatten")
+    else:
+        flatten = tf.concat([flatten, scales], axis=1, name="flatten")
     # TODO(ben): add semantics as one-hot vector here
 
     # classification network

@@ -61,10 +61,17 @@ class Preprocessor(object):
         self.classes = np.array(classes)
 
         if segments_colors:
+            self.use_segment_colors = True
             self.segments_colors = segments_colors
+        else:
+            self.use_segment_colors = False
+
 
         if segments_semantic_classes:
+            self.use_segment_semantics = True
             self.segments_semantic_classes = segments_semantic_classes
+        else:
+            self.use_segment_semantics = False
 
         if self.align == "robot":
             assert positions is not None
@@ -84,9 +91,14 @@ class Preprocessor(object):
         batch_segments_semantic_classes = []
         for i in segment_ids:
             batch_segments.append(self.segments[i])
-            batch_segments_colors.append(self.segments_colors[i])
-            batch_segments_semantic_classes.append(
-                self.segments_semantic_classes[i])
+            if self.use_segment_colors:
+                batch_segments_colors.append(self.segments_colors[i])
+            else:
+                batch_segments_colors = None
+            if self.use_segment_semantics:
+                batch_segments_semantic_classes.append(
+                    self.segments_semantic_classes[i])
+                batch_segments_semantic_classes = None
 
         batch_segments, batch_semantic_classes = self.process(
             batch_segments, train, normalize, batch_segments_colors,
@@ -122,7 +134,10 @@ class Preprocessor(object):
                 segments = self._augment_jitter(segments)
 
             # insert into voxel grid
-            segments, segments_semantic_classes = self._voxelize(segments, segments_colors, segments_semantic_classes)
+            if self.use_segment_colors and self.use_segment_semantics:
+                segments, segments_semantic_classes = self._voxelize_color_semantics(segments, segments_colors, segments_semantic_classes)
+            else:
+                segments = self._voxelize(segments)
 
             # remove mean and/or std
             if normalize and self._scaler_exists:
@@ -338,10 +353,10 @@ class Preprocessor(object):
 
         return rescaled_segments
 
-    def _voxelize(self, segments, segments_colors, segments_semantic_class):
+    def _voxelize_color_semantics(self, segments, segments_colors, segments_semantic_class):
         # voxel grid contains (bool occupied, int r, int g, int b, int semantic_class) at each position in space for each segment
         # n_semantic_classes + 1 corresponds to empty space
-        voxelized_segments = np.zeros((len(segments),) + tuple(self.voxels) + (4,)) 
+        voxelized_segments = np.zeros((len(segments),) + tuple(self.voxels) + (4,))
         voxelized_segments[:, :, :, :, 0] = (self.n_semantic_classes + 1)  # set occupancy values to value representing empty voxel
         voxelized_segments_semantic_classes = np.zeros((len(segments), self.n_semantic_classes))
         voxel_color_counter = np.zeros(tuple(self.voxels))
@@ -422,6 +437,21 @@ class Preprocessor(object):
         #       voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]])
 
         return voxelized_segments, voxelized_segments_semantic_classes
+
+    def _voxelize(self, segments):
+        voxelized_segments = np.zeros((len(segments),) + tuple(self.voxels))
+        for i, segment in enumerate(segments):
+            # remove out of bounds points
+            segment = segment[np.all(segment < self.voxels, axis=1), :]
+            segment = segment[np.all(segment >= 0, axis=1), :]
+
+            # round coordinates
+            segment = segment.astype(np.int)
+
+            # fill voxel grid
+            voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]] = 1
+
+        return voxelized_segments
 
     def _train_scaler(self, train_ids):
         from sklearn.preprocessing import StandardScaler

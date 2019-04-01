@@ -60,7 +60,7 @@ class Config(object):
                     self.base_dir
                 )
             )
-
+        print("Setting self.base_dir to ", self.base_dir)
         self.cnn_train_folders = config.get("general", "cnn_train_folders")
         self.cnn_test_folder = config.get("general", "cnn_test_folder")
         self.semantics_train_folder = config.get("general", "semantics_train_folder")
@@ -132,3 +132,6 @@ class Config(object):
         self.batch_size = config.getint("train", "batch_size")
         self.log_path = config.get("train", "log_path")
         self.debug_path = config.get("train", "debug_path")
+
+        self.use_color = config.get("train", "use_color")
+        self.use_semantics = config.get("train", "use_semantics")

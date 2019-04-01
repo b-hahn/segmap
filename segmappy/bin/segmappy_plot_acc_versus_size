@@ -33,7 +33,7 @@ dataset = Dataset(
     keep_match_thresh=0.7
 )
 
-segments, positions, classes, n_classes, _, _, _ = dataset.load()
+segments, positions, classes, n_classes, _, _, _, _, _ = dataset.load()
 duplicate_classes = dataset.duplicate_classes
 duplicate_ids = dataset.duplicate_ids
 
@@ -111,7 +111,7 @@ with tf.Session() as sess:
     saver.restore(sess, tf.train.latest_checkpoint(config.cnn_model_folder))
 
     for batch in range(gen_test.n_batches):
-        batch_segments, _ = gen_test.next()
+        batch_segments, _, _ = gen_test.next()
 
         batch_descriptors = sess.run(
             descriptor,
