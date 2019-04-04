@@ -1,6 +1,6 @@
 from __future__ import print_function
 import numpy as np
-
+import itertools
 
 class Preprocessor(object):
     def __init__(
@@ -60,14 +60,15 @@ class Preprocessor(object):
         self.segments = segments
         self.classes = np.array(classes)
 
-        if segments_colors:
+        if segments_colors != None:
             self.use_segment_colors = True
             self.segments_colors = segments_colors
         else:
             self.use_segment_colors = False
+        # print("segments_colors: {}, self.use_segment_colors: {}".format(segments_colors, self.use_segment_colors))
 
 
-        if segments_semantic_classes:
+        if segments_semantic_classes != None:
             self.use_segment_semantics = True
             self.segments_semantic_classes = segments_semantic_classes
         else:
@@ -94,11 +95,12 @@ class Preprocessor(object):
             if self.use_segment_colors:
                 batch_segments_colors.append(self.segments_colors[i])
             else:
-                batch_segments_colors = None
+                batch_segments_colors = []
             if self.use_segment_semantics:
                 batch_segments_semantic_classes.append(
                     self.segments_semantic_classes[i])
-                batch_segments_semantic_classes = None
+            else:
+                batch_segments_semantic_classes = []
 
         batch_segments, batch_semantic_classes = self.process(
             batch_segments, train, normalize, batch_segments_colors,
@@ -107,7 +109,7 @@ class Preprocessor(object):
 
         return batch_segments, batch_classes, batch_semantic_classes
 
-    def process(self, segments, train=True, normalize=True, segments_colors=None, segments_semantic_classes=None):
+    def process(self, segments, train=True, normalize=True, segments_colors=[], segments_semantic_classes=[]):
         # augment through distorsions
         if train and self.augment_remove_random_max > 0:
             segments, segments_colors, segments_semantic_classes = self._augment_remove_random(
@@ -224,11 +226,11 @@ class Preprocessor(object):
         return augmented_segments
 
     # TODO(ben): add proper checks to see if segments_colors is being used
-    def _augment_remove_random(self, segments, segments_colors=None, segments_semantic_classes=None):
+    def _augment_remove_random(self, segments, segments_colors=[], segments_semantic_classes=[]):
         augmented_segments = []
         augmented_segments_colors = []
         augmented_segment_semantic_classes = []
-        for segment, segment_color, segment_semantic_class in zip(segments, segments_colors, segments_semantic_classes):
+        for segment, segment_color, segment_semantic_class in itertools.zip_longest(segments, segments_colors, segments_semantic_classes):
             # percentage of points to remove
             remove = (
                 np.random.random()
@@ -244,20 +246,20 @@ class Preprocessor(object):
             segment = segment[idx]
             augmented_segments.append(segment)
 
-            if segments_colors:
+            if segments_colors != []:
                 segment_color = segment_color[idx]
                 augmented_segments_colors.append(segment_color)
-            if segments_semantic_classes:
+            if segments_semantic_classes != []:
                 segment_semantic_class = segment_semantic_class[idx]
                 augmented_segment_semantic_classes.append(segment_semantic_class)
 
         return augmented_segments, augmented_segments_colors, augmented_segment_semantic_classes
 
-    def _augment_remove_plane(self, segments, segments_colors=None, segments_semantic_classes=None):
+    def _augment_remove_plane(self, segments, segments_colors=[], segments_semantic_classes=[]):
         augmented_segments = []
         augmented_segments_colors = []
         augmented_segments_semantic_classes = []
-        for segment, segment_color, segment_semantic_classes in zip(
+        for segment, segment_color, segment_semantic_classes in itertools.zip_longest(
                 segments, segments_colors, segments_semantic_classes):
             # center segment
             center = np.mean(segment, axis=0)
@@ -287,8 +289,10 @@ class Preprocessor(object):
                         and remove_percentage < self.augment_remove_plane_max
                     ):
                         segment = segment[keep]
-                        segment_color = segment_color[keep]
-                        segment_semantic_classes = segment_semantic_classes[keep]
+                        if segments_colors != []:
+                            segment_color = segment_color[keep]
+                        if segments_semantic_classes != []:
+                            segment_semantic_classes = segment_semantic_classes[keep]
                         found = True
                         break
 
@@ -297,8 +301,10 @@ class Preprocessor(object):
 
             segment = segment + center
             augmented_segments.append(segment)
-            augmented_segments_colors.append(segment_color)
-            augmented_segments_semantic_classes.append(segment_semantic_classes)
+            if segments_colors != []:
+                augmented_segments_colors.append(segment_color)
+            if segment_semantic_classes != []:
+                augmented_segments_semantic_classes.append(segment_semantic_classes)
 
         return augmented_segments, augmented_segments_colors, augmented_segments_semantic_classes
 
@@ -369,77 +375,35 @@ class Preprocessor(object):
             segment = segment[oob_idx2, :]
             segment_color = segment_color[oob_idx1, :]
             segment_color = segment_color[oob_idx2, :]
-            # print("segment_color.shape: ", segment_color.shape)
             # TODO: semantic class is stored as integer (0-65 for mapillary vistas). Change either to one-hot somewhere, and/or accumulate the number of classes for each point in a segment
             segment_semantic_class = segment_semantic_class[oob_idx1]
             segment_semantic_class = segment_semantic_class[oob_idx2]
-            # print("segment_semantic_class.shape", segment_semantic_class.shape)
 
             # round coordinates
             segment = segment.astype(np.int)
 
             # fill voxel grid
-            # TODO: store color and semantic class in a (4,) vector.In feed_dict or generator, need to ensure only the data I'm interested in is fed into the neural net. Also could add flag to convert color to binary occ grid if desired
-            # voxel grid values: (occupied 1/0, r, g, b, semantic class)
             #TODO: this could be done in a more efficient manner
 
             # check if this voxel has been previously filled already; if so, calculate mean color)
-            # print("voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]].shape:", voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]].shape)
-            # print("[i, segment[:, 0], segment[:, 1], segment[:, 2]]: ", [i, segment[:, 0], segment[:, 1], segment[:, 2]])
             for j in range(len(segment)):
-                # if np.all(voxelized_segments[i, segment[j, 0], segment[j, 1], segment[j, 2]] == self.n_semantic_classes + 1):
-                #     # if empty voxel
-                #     print("empty voxel!")
-                #     voxelized_segments[i, segment[j, 0], segment[j, 1], segment[j, 2]] = np.hstack([0,
-                #                        segment_color[j]])
-                # else:
-                #     # voxel already assigned value - increment counter to compute mean color later
-                #     print("Voxel already exists - computing mean")
                 voxelized_segments[i, segment[j, 0], segment[j, 1],
                                     segment[j, 2]] += np.hstack(
                                         [0, segment_color[j]])
-                # print(
-                #     "voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]]:",
-                #     voxelized_segments[i, segment[:, 0], segment[:, 1],
-                #                        segment[:, 2]])
                 voxel_color_counter[segment[j, 0], segment[j, 1],
                                     segment[j, 2]] += 1
-                # # print("segment_color[j]", segment_color[j])
-                # print(
-                #     "voxel_color_counter[{}, {}, {}] : ".format(
-                #         segment[j, 0], segment[j, 1], segment[j, 2]),
-                #     voxel_color_counter[segment[j, 0], segment[j, 1],
-                #                         segment[j, 2]], "segment_color[j]",
-                #     segment_color[j])
 
             # compute mean color
-            # TODO: this should never divide by 0; verify this works
-            # print("voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]][:, 1:].shape:", voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]][:, 1:].shape)
-            # print("voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]].shape:", voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]].shape)
-            # print("voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]].shape:", voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]].shape)
-            # print("voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]]:", voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]])
-            # print("voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]]: ", voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]])
-            # voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]][:, 1:] /= voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]][:, np.newaxis]
             voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2], 1:] /= voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]][:, np.newaxis]
-            # print("voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]]: ", voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]])
-            # print("voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]][:, np.newaxis]: ", voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]][:, np.newaxis])
-            # for s, c, q, w in zip(segment, segment_color, voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]], voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]]):
-            #     print(s,c, q, w)
-            # print(np.max(voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]]))
             if np.max(voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]]) > 255:
                 # TODO: verify this never occurs
                 print("Error: max color value > 255!!")
                 exit(0)
 
-        # print("voxelized_segments.shape: ", voxelized_segments.shape)
-        # print("voxelized_segments_semantic_classes.shape: ", voxelized_segments_semantic_classes.shape)
-        # print("voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]]:",
-        #       voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]])
-
         return voxelized_segments, voxelized_segments_semantic_classes
 
     def _voxelize(self, segments):
-        voxelized_segments = np.zeros((len(segments),) + tuple(self.voxels))
+        voxelized_segments = np.zeros((len(segments),) + tuple(self.voxels) + (1,))
         for i, segment in enumerate(segments):
             # remove out of bounds points
             segment = segment[np.all(segment < self.voxels, axis=1), :]
@@ -449,7 +413,7 @@ class Preprocessor(object):
             segment = segment.astype(np.int)
 
             # fill voxel grid
-            voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2]] = 1
+            voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2], 0] = 1
 
         return voxelized_segments
 

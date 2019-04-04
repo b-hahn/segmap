@@ -2,6 +2,8 @@ from __future__ import print_function
 from builtins import input
 import numpy as np
 import os
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial import ConvexHull, Delaunay
@@ -12,13 +14,14 @@ import ensure_segmappy_is_installed
 from segmappy import Dataset
 from segmappy.tools.hull import point_in_hull, n_points_in_hull, are_in_hull
 
-DATASET_FOLDER = "with_merge_events/drive18"
-FILE_PATH = DATASET_FOLDER + "/matches_database.csv"
+# DATASET_FOLDER = "with_merge_events/drive18"
+DATASET_FOLDER = "2011_09_30_drive_0027_decent"
+FILE_PATH = "/home/bhahn/.segmap/training_datasets/" + DATASET_FOLDER + "/matches_database.csv"
 if os.path.isfile(FILE_PATH):
     os.remove(FILE_PATH)
 
 dataset = Dataset(folder=DATASET_FOLDER, use_matches=False, normalize_classes=False)
-segments, _, ids, n_ids, features, matches, labels_dict = dataset.load()
+segments, _, ids, n_ids, features, matches, labels_dict, _, _ = dataset.load()
 
 filtered_segments = []
 filtered_ids = []
@@ -136,6 +139,12 @@ for i in range(n_unique_ids):
                 matches.append([unique_ids[i], unique_ids[j]])
 
                 if PLOT_3D:
+                    source_segment = segment1
+                    target_segment = segment2
+                    source_volume_ratio = volume_ratio_1
+                    target_volume_ratio = volume_ratio_2
+                    source_hull = hull1
+                    target_hulls = hulls
                     x_min = min(source_segment[:, 0].min(), target_segment[:, 0].min())
                     x_max = max(source_segment[:, 0].max(), target_segment[:, 0].max())
                     y_min = min(source_segment[:, 1].min(), target_segment[:, 1].min())
@@ -190,7 +199,8 @@ for i in range(n_unique_ids):
                     ax.set_zlim(z_min, z_max)
                     plt.draw()
                     plt.pause(0.001)
-                    input("Segment: ")
+                    # input("Segment: ")
+                    fig.savefig('matches_3d.png')
                     plt.clf()
                 elif PLOT_MAP:
                     fig = plt.figure(1)
@@ -204,14 +214,16 @@ for i in range(n_unique_ids):
                     # plt.draw()
                     # plt.pause(0.001)
                     # input('Segment: ')
+                    fig.savefig('matches_map.png')
 
 if PLOT_MAP:
     plt.draw()
     plt.pause(0.001)
-    input("Segment: ")
+    # input("Segment: ")
     plt.clf()
 
 print("Number of matches: ", len(matches))
 
 matches = np.asarray(matches)
 np.savetxt(FILE_PATH, (matches), delimiter=" ")
+print("Saved matches to", FILE_PATH)

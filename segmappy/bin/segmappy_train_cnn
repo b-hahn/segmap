@@ -3,6 +3,7 @@ from __future__ import print_function
 import numpy as np
 import sys
 import os
+from datetime import datetime
 
 import ensure_segmappy_is_installed
 from segmappy import Config
@@ -10,7 +11,7 @@ from segmappy import Dataset
 from segmappy import Generator
 from segmappy.tools.classifiertools import get_default_dataset, get_default_preprocessor
 from segmappy.tools.roccurve import get_roc_pairs, get_roc_curve
-from segmappy.models.model_groups_tf import init_model
+from segmappy.models.model_groups_tf import init_model, init_model_color_semantics
 
 # read config file
 configfile = "default_training.ini"
@@ -24,16 +25,18 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--log")
 parser.add_argument("--debug", action="store_true")
 parser.add_argument("--retrain")
-parser.add_argument("--checkpoints", type=int, default=1)
+parser.add_argument("--checkpoints", type=int, default=10)
 parser.add_argument("--keep-best", action="store_true")
 parser.add_argument("--roc", action="store_true")
 args = parser.parse_args()
-config.log_name = args.log
-config.debug = args.debug
+config.log_name = config.log_path
+# config.log_name = args.log
+# config.debug = args.debug
 config.checkpoints = args.checkpoints
 config.retrain = args.retrain
 config.keep_best = args.keep_best
 config.roc = args.roc
+config.cnn_model_folder = os.path.join(config.cnn_model_folder, datetime.now().strftime("%Y-%m-%d-%H:%M:%S"))
 
 # create or empty the model folder
 if not os.path.exists(config.cnn_model_folder):
@@ -49,8 +52,12 @@ else:
 preprocessor = get_default_preprocessor(config)
 
 segments = []
-segments_colors = []
-segments_semantic_classes = []  # semantic segmentation classes
+segments_colors = None
+if config.use_color:
+    segments_colors = []
+segments_semantic_classes = None  # semantic segmentation classes
+if config.use_semantics:
+    segments_semantic_classes = []
 classes = np.array([], dtype=np.int)
 n_classes = 0
 duplicate_classes = np.array([], dtype=np.int)
@@ -71,11 +78,13 @@ for run in runs:
     run_duplicate_classes += max_duplicate_class
 
     segments += run_segments
-    segments_colors += run_segments_colors
-    segments_semantic_classes += run_segments_semantic_classes
     print("segments: ", segments[0].shape)
-    print("segments_colors: ", segments_colors[0].shape)
-    print("segments_semantic_classes: ", segments_semantic_classes[0].shape)
+    if config.use_color:
+        segments_colors += run_segments_colors
+        print("segments_colors: ", segments_colors[0].shape)
+    if config.use_semantics:
+        segments_semantic_classes += run_segments_semantic_classes
+        print("segments_semantic_classes: ", segments_semantic_classes[0].shape)
 
     classes = np.concatenate((classes, run_classes), axis=0)
     n_classes += run_n_classes
@@ -272,7 +281,11 @@ if config.retrain:
     saver = tf.train.import_meta_graph(config.retrain + ".meta")
 else:
     # define a new model
-    init_model(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
+    print("Training from scratch with use_color = {} and use_semantics = {}.".format(config.use_color, config.use_semantics))
+    if config.use_color and config.use_semantics:
+        init_model_color_semantics(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
+    else:
+        init_model(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
 
     # model saver
     saver = tf.train.Saver(max_to_keep=config.checkpoints)
@@ -284,7 +297,7 @@ cnn_input = cnn_graph.get_tensor_by_name("InputScope/input:0")
 y_true = cnn_graph.get_tensor_by_name("y_true:0")
 training = cnn_graph.get_tensor_by_name("training:0")
 scales = cnn_graph.get_tensor_by_name("scales:0")
-semantics = cnn_graph.get_tensor_by_name("semantics:0")
+semantics =  cnn_graph.get_tensor_by_name("semantics:0") if config.use_semantics else None
 
 loss = cnn_graph.get_tensor_by_name("loss:0")
 loss_c = cnn_graph.get_tensor_by_name("loss_c:0")
@@ -305,13 +318,14 @@ summary_epoch = tf.summary.merge_all("summary_epoch")
 with tf.Session(config=tf.ConfigProto(
       allow_soft_placement=True)) as sess:
     # tensorboard statistics
+    print("config.log_name:", config.log_name)
     if config.log_name:
         print("logging to ", config.log_path, config.log_name)
         train_writer = tf.summary.FileWriter(
-            os.path.join(config.log_path, config.log_name, "train"), sess.graph
+            os.path.join(config.log_path, config.log_name, "train", datetime.now().strftime("%Y-%m-%d-%H:%M:%S")), sess.graph
         )
         test_writer = tf.summary.FileWriter(
-            os.path.join(config.log_path, config.log_name, "test")
+            os.path.join(config.log_path, config.log_name, "test", datetime.now().strftime("%Y-%m-%d-%H:%M:%S"))
         )
 
     # initialize all tf variables
@@ -345,17 +359,26 @@ with tf.Session(config=tf.ConfigProto(
         for step, train in enumerate(batches):
             if train:
                 batch_segments, batch_classes, batch_semantics = gen_train.next()
-
+                feed_dict = {}
+                if config.use_semantics:
+                    feed_dict={
+                            cnn_input: batch_segments,
+                            y_true: batch_classes,
+                            training: True,
+                            scales: preprocessor.last_scales,
+                            semantics: batch_semantics,
+                        }
+                else:
+                    feed_dict={
+                            cnn_input: batch_segments,
+                            y_true: batch_classes,
+                            training: True,
+                            scales: preprocessor.last_scales,
+                        }
                 # run optimizer and calculate loss and accuracy
                 summary, batch_loss, batch_loss_c, batch_loss_r, batch_accuracy, batch_prob, _ = sess.run(
                     [summary_batch, loss, loss_c, loss_r, accuracy, y_prob, train_op],
-                    feed_dict={
-                        cnn_input: batch_segments,
-                        y_true: batch_classes,
-                        training: True,
-                        scales: preprocessor.last_scales,
-                        semantics: batch_semantics,
-                    },
+                    feed_dict=feed_dict,
                 )
 
                 if config.debug:
@@ -373,15 +396,24 @@ with tf.Session(config=tf.ConfigProto(
             else:
                 batch_segments, batch_classes, batch_semantics = gen_test.next()
 
+                if config.use_semantics:
+                    feed_dict={
+                            cnn_input: batch_segments,
+                            y_true: batch_classes,
+                            scales: preprocessor.last_scales,
+                            semantics: batch_semantics,
+                        }
+                else:
+                    feed_dict={
+                            cnn_input: batch_segments,
+                            y_true: batch_classes,
+                            scales: preprocessor.last_scales,
+                        }
+
                 # calculate test loss and accuracy
                 summary, batch_loss, batch_loss_c, batch_loss_r, batch_accuracy, batch_prob = sess.run(
                     [summary_batch, loss, loss_c, loss_r, accuracy, y_prob],
-                    feed_dict={
-                        cnn_input: batch_segments,
-                        y_true: batch_classes,
-                        scales: preprocessor.last_scales,
-                        semantics: batch_semantics,
-                    },
+                    feed_dict=feed_dict,
                 )
 
                 if config.debug:

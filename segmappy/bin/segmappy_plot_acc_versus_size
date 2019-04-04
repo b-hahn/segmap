@@ -33,12 +33,14 @@ dataset = Dataset(
     keep_match_thresh=0.7
 )
 
-segments, positions, classes, n_classes, _, _, _, _, _ = dataset.load()
+segments, positions, classes, n_classes, _, _, _, segments_colors, segments_semantics = dataset.load()
+# segments, positions, classes, n_classes, _, _, _, _, _ = dataset.load()
 duplicate_classes = dataset.duplicate_classes
 duplicate_ids = dataset.duplicate_ids
 
 preprocessor = get_default_preprocessor(config)
-preprocessor.init_segments(segments, classes, positions=positions)
+# preprocessor.init_segments(segments, classes, positions=positions)
+preprocessor.init_segments(segments, classes, positions=positions, segments_colors=segments_colors, segments_semantic_classes=segments_semantics)
 
 # calculate all feature sets
 feature_sets = []
@@ -105,17 +107,22 @@ cnn_graph = tf.get_default_graph()
 cnn_input = cnn_graph.get_tensor_by_name("InputScope/input:0")
 scales = cnn_graph.get_tensor_by_name("scales:0")
 descriptor = cnn_graph.get_tensor_by_name("OutputScope/descriptor_read:0")
+semantics =  cnn_graph.get_tensor_by_name("semantics:0") if config.use_semantics else None
+
 
 cnn_features = []
 with tf.Session() as sess:
     saver.restore(sess, tf.train.latest_checkpoint(config.cnn_model_folder))
 
     for batch in range(gen_test.n_batches):
-        batch_segments, _, _ = gen_test.next()
-
+        batch_segments, _, batch_semantics = gen_test.next()
+        if config.use_semantics:
+            feed_dict = {cnn_input: batch_segments, scales: preprocessor.last_scales, semantics: batch_semantics}
+        else:
+            feed_dict = {cnn_input: batch_segments, scales: preprocessor.last_scales}
         batch_descriptors = sess.run(
             descriptor,
-            feed_dict={cnn_input: batch_segments, scales: preprocessor.last_scales},
+            feed_dict=feed_dict,
         )
 
         for batch_descriptor in batch_descriptors:
@@ -228,7 +235,7 @@ params = {
     "legend.fontsize": fontsize,
     "xtick.labelsize": fontsize,
     "ytick.labelsize": fontsize,
-    "text.usetex": True,
+    "text.usetex": False,
     "font.family": "serif",
     "font.serif": "Computer Modern Roman",
     "figure.figsize": fig_size,

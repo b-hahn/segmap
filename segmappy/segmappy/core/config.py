@@ -133,5 +133,5 @@ class Config(object):
         self.log_path = config.get("train", "log_path")
         self.debug_path = config.get("train", "debug_path")
 
-        self.use_color = config.get("train", "use_color")
-        self.use_semantics = config.get("train", "use_semantics")
+        self.use_color = config.getboolean("train", "use_color")
+        self.use_semantics = config.getboolean("train", "use_semantics")

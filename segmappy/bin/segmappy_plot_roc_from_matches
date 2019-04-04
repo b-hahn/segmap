@@ -183,7 +183,7 @@ params = {
     "legend.fontsize": fontsize,
     "xtick.labelsize": fontsize,
     "ytick.labelsize": fontsize,
-    "text.usetex": True,
+    "text.usetex": False,
     "font.family": "serif",
     "font.serif": "Computer Modern Roman",
     "figure.figsize": fig_size,
