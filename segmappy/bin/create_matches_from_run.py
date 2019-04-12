@@ -101,6 +101,7 @@ for i in range(n_unique_ids):
             np.linalg.norm(unique_centroids[i] - unique_centroids[j])
             <= CENTROID_DISTANCE_THRESHOLD
         ):
+            print("below distance threshold!")
 
             segment2 = unique_segments[j]
             hull2 = hulls[j]
@@ -130,6 +131,7 @@ for i in range(n_unique_ids):
 
             volume_ratio_1 = intersection_hull.volume / hull1.volume
             volume_ratio_2 = intersection_hull.volume / hull2.volume
+            print("volume_ratio_1:", volume_ratio_1, "volume_ratio_2:", volume_ratio_2)
 
             if (
                 volume_ratio_1 > HULL_VOLUME_THRESHOLD

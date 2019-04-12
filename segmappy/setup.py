@@ -21,6 +21,7 @@ setup(
     packages=find_packages(),
     scripts=["bin/ensure_segmappy_is_installed.py",
              "bin/segmappy_train_cnn",
+             "bin/segmappy_train_cnn_with_reconstruction_loss",
              "bin/segmappy_train_semantics",
              "bin/segmappy_plot_roc_from_matches",
              "bin/segmappy_plot_acc_versus_size",

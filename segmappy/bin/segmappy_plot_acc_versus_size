@@ -3,6 +3,8 @@ from __future__ import print_function
 import numpy as np
 import sys
 import os
+import datetime
+from shutil import copyfile
 
 COMPARE_WITH_AE = True
 LOAD_DATA_FROM_FILE = False
@@ -13,19 +15,22 @@ from segmappy import Dataset
 from segmappy import Generator
 from segmappy.tools.classifiertools import get_default_preprocessor
 
-# read config file
-configfile = "default_training.ini"
-config = Config(configfile)
 
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--bins", type=int, default=10)
 parser.add_argument("--ae_model")
+parser.add_argument("--train_config", required=True)
 args = parser.parse_args()
+
+# read config file
+configfile = args.train_config
+config = Config(configfile)
 config.bins = args.bins
 config.ae_model = args.ae_model
 
+current_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 # load dataset and preprocessor
 dataset = Dataset(
     folder=config.cnn_test_folder,
@@ -39,8 +44,10 @@ duplicate_classes = dataset.duplicate_classes
 duplicate_ids = dataset.duplicate_ids
 
 preprocessor = get_default_preprocessor(config)
-# preprocessor.init_segments(segments, classes, positions=positions)
-preprocessor.init_segments(segments, classes, positions=positions, segments_colors=segments_colors, segments_semantic_classes=segments_semantics)
+if config.use_color and config.use_semantics:
+    preprocessor.init_segments(segments, classes, positions=positions, segments_colors=segments_colors, segments_semantic_classes=segments_semantics)
+else:
+    preprocessor.init_segments(segments, classes, positions=positions)
 
 # calculate all feature sets
 feature_sets = []
@@ -98,7 +105,7 @@ tf.reset_default_graph()
 
 # restore variable names from previous session
 saver = tf.train.import_meta_graph(
-    os.path.join(config.cnn_model_folder, "model.ckpt.meta")
+    os.path.join(config.cnn_model_folder, config.training_timestamp, "model{}.ckpt.meta".format("-" + config.checkpoint_version if config.checkpoint_version else ""))
 )
 
 # get key tensorflow variables
@@ -112,7 +119,7 @@ semantics =  cnn_graph.get_tensor_by_name("semantics:0") if config.use_semantics
 
 cnn_features = []
 with tf.Session() as sess:
-    saver.restore(sess, tf.train.latest_checkpoint(config.cnn_model_folder))
+    saver.restore(sess, tf.train.latest_checkpoint(os.path.join(config.cnn_model_folder, config.training_timestamp)))
 
     for batch in range(gen_test.n_batches):
         batch_segments, _, batch_semantics = gen_test.next()
@@ -290,4 +297,8 @@ plt.xlabel("Segment completness [\%]")
 plt.ylabel("k-neighbours needed [-]")
 plt.tight_layout()
 
-plt.savefig("acc_versus_size.pdf")
+print(config.cnn_test_folder, config.cnn_model_folder)
+
+plt.savefig(os.path.join(config.cnn_model_folder, config.training_timestamp, "acc_versus_size_{}.pdf".format(current_time)))
+# copyfile(os.path.join(config.cnn_model_folder, configfile), os.path.join(config.cnn_model_folder, 'train_config_' + current_time + '.ini'))
+

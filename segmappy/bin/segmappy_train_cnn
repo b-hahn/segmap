@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import os
 from datetime import datetime
+from shutil import copyfile
 
 import ensure_segmappy_is_installed
 from segmappy import Config
@@ -11,10 +12,11 @@ from segmappy import Dataset
 from segmappy import Generator
 from segmappy.tools.classifiertools import get_default_dataset, get_default_preprocessor
 from segmappy.tools.roccurve import get_roc_pairs, get_roc_curve
-from segmappy.models.model_groups_tf import init_model, init_model_color_semantics
+from segmappy.models.model_groups_tf import init_model, init_model_no_rl, init_model_color_semantics
 
 # read config file
 configfile = "default_training.ini"
+current_time = datetime.now()
 
 config = Config(configfile)
 
@@ -31,12 +33,13 @@ parser.add_argument("--roc", action="store_true")
 args = parser.parse_args()
 config.log_name = config.log_path
 # config.log_name = args.log
-# config.debug = args.debug
+config.debug = args.debug
 config.checkpoints = args.checkpoints
 config.retrain = args.retrain
 config.keep_best = args.keep_best
 config.roc = args.roc
-config.cnn_model_folder = os.path.join(config.cnn_model_folder, datetime.now().strftime("%Y-%m-%d-%H:%M:%S"))
+config.cnn_model_folder = os.path.join(config.cnn_model_folder, current_time.strftime("%Y-%m-%d-%H-%M-%S"))
+config.debug_path = os.path.join(config.debug_path, current_time.strftime("%Y-%m-%d-%H-%M-%S"))
 
 # create or empty the model folder
 if not os.path.exists(config.cnn_model_folder):
@@ -47,6 +50,14 @@ else:
     model_files = glob.glob(os.path.join(config.cnn_model_folder, "*"))
     for model_file in model_files:
         os.remove(model_file)
+
+# copy training config file
+output_configfile = os.path.join(config.cnn_model_folder, "training_config_" + current_time.strftime("%Y-%m-%d-%H-%M-%S") + ".ini")
+copyfile(os.path.join(os.environ["HOME"], ".segmap", configfile), output_configfile)
+# write timestamp of current training run to config file to find it more easily later
+with open(output_configfile, 'a') as f:
+    f.write("\ntraining_timestamp =  {}\n".format(current_time.strftime("%Y-%m-%d-%H-%M-%S")))
+
 
 # load preprocessor
 preprocessor = get_default_preprocessor(config)
@@ -283,12 +294,13 @@ else:
     # define a new model
     print("Training from scratch with use_color = {} and use_semantics = {}.".format(config.use_color, config.use_semantics))
     if config.use_color and config.use_semantics:
-        init_model_color_semantics(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
+        init_model_color_semantics_no_rl(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
     else:
-        init_model(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
+        # init_model(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
+        init_model_no_rl(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
 
     # model saver
-    saver = tf.train.Saver(max_to_keep=config.checkpoints)
+    saver = tf.train.Saver(max_to_keep=config.checkpoints, save_relative_paths=True)
 
 # get key tensorflow variables
 cnn_graph = tf.get_default_graph()
@@ -299,9 +311,9 @@ training = cnn_graph.get_tensor_by_name("training:0")
 scales = cnn_graph.get_tensor_by_name("scales:0")
 semantics =  cnn_graph.get_tensor_by_name("semantics:0") if config.use_semantics else None
 
-loss = cnn_graph.get_tensor_by_name("loss:0")
+# loss = cnn_graph.get_tensor_by_name("loss:0")
 loss_c = cnn_graph.get_tensor_by_name("loss_c:0")
-loss_r = cnn_graph.get_tensor_by_name("loss_r:0")
+# loss_r = cnn_graph.get_tensor_by_name("loss_r:0")
 
 accuracy = cnn_graph.get_tensor_by_name("accuracy:0")
 y_prob = cnn_graph.get_tensor_by_name("y_prob:0")
@@ -322,10 +334,10 @@ with tf.Session(config=tf.ConfigProto(
     if config.log_name:
         print("logging to ", config.log_path, config.log_name)
         train_writer = tf.summary.FileWriter(
-            os.path.join(config.log_path, config.log_name, "train", datetime.now().strftime("%Y-%m-%d-%H:%M:%S")), sess.graph
+            os.path.join(config.log_path, config.log_name, "train", datetime.now().strftime("%Y-%m-%d-%H-%M-%S")), sess.graph
         )
         test_writer = tf.summary.FileWriter(
-            os.path.join(config.log_path, config.log_name, "test", datetime.now().strftime("%Y-%m-%d-%H:%M:%S"))
+            os.path.join(config.log_path, config.log_name, "test", datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
         )
 
     # initialize all tf variables
@@ -341,15 +353,15 @@ with tf.Session(config=tf.ConfigProto(
     # sequence of train and test batches
     batches = np.array([1] * gen_train.n_batches + [0] * gen_test.n_batches)
     for epoch in range(0, config.n_epochs):
-        train_loss = 0
+        # train_loss = 0
         train_loss_c = 0
-        train_loss_r = 0
+        # train_loss_r = 0
         train_accuracy = 0
         train_step = 0
 
-        test_loss = 0
+        # test_loss = 0
         test_loss_c = 0
-        test_loss_r = 0
+        # test_loss_r = 0
         test_accuracy = 0
         test_step = 0
 
@@ -376,8 +388,9 @@ with tf.Session(config=tf.ConfigProto(
                             scales: preprocessor.last_scales,
                         }
                 # run optimizer and calculate loss and accuracy
-                summary, batch_loss, batch_loss_c, batch_loss_r, batch_accuracy, batch_prob, _ = sess.run(
-                    [summary_batch, loss, loss_c, loss_r, accuracy, y_prob, train_op],
+                # summary, batch_loss, batch_loss_c, batch_loss_r, batch_accuracy, batch_prob, _ = sess.run(
+                summary, batch_loss_c, batch_accuracy, batch_prob, _ = sess.run(
+                    [summary_batch, loss_c, accuracy, y_prob, train_op],
                     feed_dict=feed_dict,
                 )
 
@@ -388,9 +401,9 @@ with tf.Session(config=tf.ConfigProto(
                 if config.log_name:
                     train_writer.add_summary(summary, sess.run(global_step))
 
-                train_loss += batch_loss
+                # train_loss += batch_loss
                 train_loss_c += batch_loss_c
-                train_loss_r += batch_loss_r
+                # train_loss_r += batch_loss_r
                 train_accuracy += batch_accuracy
                 train_step += 1
             else:
@@ -411,10 +424,15 @@ with tf.Session(config=tf.ConfigProto(
                         }
 
                 # calculate test loss and accuracy
-                summary, batch_loss, batch_loss_c, batch_loss_r, batch_accuracy, batch_prob = sess.run(
-                    [summary_batch, loss, loss_c, loss_r, accuracy, y_prob],
+                # summary, batch_loss, batch_loss_c, batch_loss_r, batch_accuracy, batch_prob = sess.run(
+                summary, batch_loss_c, batch_accuracy, batch_prob = sess.run(
+                    [summary_batch, loss_c, accuracy, y_prob],
                     feed_dict=feed_dict,
                 )
+                # summary, batch_loss_c, batch_accuracy, batch_prob = sess.run(
+                #     [summary_batch, loss, loss_c, loss_r, accuracy, y_prob],
+                #     feed_dict=feed_dict,
+                # )
 
                 if config.debug:
                     for i, segment_id in enumerate(gen_test.batch_ids):
@@ -423,9 +441,9 @@ with tf.Session(config=tf.ConfigProto(
                 if config.log_name:
                     test_writer.add_summary(summary, sess.run(global_step))
 
-                test_loss += batch_loss
+                # test_loss += batch_loss
                 test_loss_c += batch_loss_c
-                test_loss_r += batch_loss_r
+                # test_loss_r += batch_loss_r
                 test_accuracy += batch_accuracy
                 test_step += 1
 
@@ -438,20 +456,28 @@ with tf.Session(config=tf.ConfigProto(
             console_output = "epoch %2d " % epoch
 
             if train_step:
-                console_output += "loss %.4f acc %.2f c %.4f r %.4f " % (
-                    train_loss / train_step,
+                console_output += "acc %.2f c %.4f " % (
                     train_accuracy / train_step * 100,
                     train_loss_c / train_step,
-                    train_loss_r / train_step,
                 )
+                # console_output += "loss %.4f acc %.2f c %.4f r %.4f " % (
+                #     train_loss / train_step,
+                #     train_accuracy / train_step * 100,
+                #     train_loss_c / train_step,
+                #     train_loss_r / train_step,
+                # )
 
             if test_step:
-                console_output += "v_loss %.4f v_acc %.2f v_c %.4f v_r %.4f" % (
-                    test_loss / test_step,
+                console_output += "v_acc %.2f v_c %.4f" % (
                     test_accuracy / test_step * 100,
                     test_loss_c / test_step,
-                    test_loss_r / test_step,
                 )
+                # console_output += "v_loss %.4f v_acc %.2f v_c %.4f v_r %.4f" % (
+                #     test_loss / test_step,
+                #     test_accuracy / test_step * 100,
+                #     test_loss_c / test_step,
+                #     test_loss_r / test_step,
+                # )
 
             console_output_size = len(console_output)
 
@@ -465,22 +491,22 @@ with tf.Session(config=tf.ConfigProto(
                 json.dump(pred, fp)
 
             epoch_log.append(epoch)
-            train_loss_log.append(train_loss / train_step)
+            # train_loss_log.append(train_loss / train_step)
             train_loss_c_log.append(train_loss_c / train_step)
-            train_loss_r_log.append(train_loss_r / train_step)
+            # train_loss_r_log.append(train_loss_r / train_step)
             train_accuracy_log.append(train_accuracy / train_step * 100)
-            test_loss_log.append(test_loss / test_step)
+            # test_loss_log.append(test_loss / test_step)
             test_loss_c_log.append(test_loss_c / test_step)
-            test_loss_r_log.append(test_loss_r / test_step)
+            # test_loss_r_log.append(test_loss_r / test_step)
             test_accuracy_log.append(test_accuracy / test_step * 100)
 
             with open(os.path.join(config.debug_path, "loss.json"), "w") as fp:
                 json.dump(
                     {
                         "epoch": epoch_log,
-                        "train_loss": train_loss_log,
+                        # "train_loss": train_loss_log,
                         "train_loss_c": train_loss_c_log,
-                        "train_loss_r": train_loss_r_log,
+                        # "train_loss_r": train_loss_r_log,
                         "train_accuracy": train_accuracy_log,
                         "test_loss": test_loss_log,
                         "test_loss_c": test_loss_c_log,

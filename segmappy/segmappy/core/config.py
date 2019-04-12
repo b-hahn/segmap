@@ -135,3 +135,11 @@ class Config(object):
 
         self.use_color = config.getboolean("train", "use_color")
         self.use_semantics = config.getboolean("train", "use_semantics")
+
+        self.checkpoint_version = config.get("test", "checkpoint_version")
+
+        try:
+            self.training_timestamp = config.get("test", "training_timestamp")
+        except:
+            self.training_timestamp = ""
+            print("No training timestamp found!")
