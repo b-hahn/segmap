@@ -37,7 +37,7 @@ class Descriptors {
  public:
   Descriptors();
 //   explicit Descriptors(const DescriptorsParameters& parameters);
-  explicit Descriptors(const DescriptorsParameters& parameters, bool use_color = false, bool use_semantic_segmentation = false);
+  explicit Descriptors(const DescriptorsParameters& parameters/* , bool use_color = false, bool use_semantic_segmentation = false */);
   ~Descriptors();
 
   /// \brief Describe the segment by modifying its internal Features object.

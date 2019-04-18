@@ -118,7 +118,7 @@ public:
       const std::string& reconstruction_values_name,
       std::vector<std::vector<float> >& descriptors,
       std::vector<Array3D>& reconstructions,
-      const std::shared_ptr<std::vector<float>> semantic_segmentation = nullptr,
+      const std::shared_ptr<std::vector<std::vector<float>>> semantic_segmentation = nullptr,
       const std::string& semantic_segmentation_tensor_name = "") const;
 
 //   // template specialization for 3D neural net input 

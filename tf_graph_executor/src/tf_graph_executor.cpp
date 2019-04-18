@@ -239,7 +239,7 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     const std::string &reconstruction_values_name,
     std::vector<std::vector<float>> &descriptors,
     std::vector<Array3D> &reconstructions,
-    const std::shared_ptr<std::vector<float>> semantic_segmentation,
+    const std::shared_ptr<std::vector<std::vector<float>>> semantic_segmentation,
     const std::string &semantic_segmentation_tensor_name) const
 {
     CHECK(false) << "Not implemented - use template specialization for Array3D or Array4D";
@@ -255,7 +255,7 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     const std::string& reconstruction_values_name,
     std::vector<std::vector<float> >& descriptors,
     std::vector<Array3D>& reconstructions,
-    const std::shared_ptr<std::vector<float>> semantic_segmentation,
+    const std::shared_ptr<std::vector<std::vector<float>>> semantic_segmentation,
     const std::string& semantic_segmentation_tensor_name) const {
   CHECK(!inputs.empty());
   descriptors.clear();
@@ -299,15 +299,17 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     // TODO: can remove semantic_segmentation from the Array3D overload, right?
     auto semantic_segmentation_shape = TensorShape();
     semantic_segmentation_shape.AddDim((int64) inputs.size());
-    semantic_segmentation_shape.AddDim(1u);
+    semantic_segmentation_shape.AddDim(66u);
     //semantic_segmentation_shape.AddDim(1u);
     Tensor semantic_segmentation_tensor(DT_FLOAT, semantic_segmentation_shape);
 
   if (semantic_segmentation != nullptr) {
     // put values in the input tensor
-    auto semantic_segmentation_tensor_values = semantic_segmentation_tensor.tensor<float, 1>();
+    auto semantic_segmentation_tensor_values = semantic_segmentation_tensor.tensor<float, 2>();
     for (size_t i=0; i < semantic_segmentation->size(); i++) {
-        semantic_segmentation_tensor_values(i) = (*semantic_segmentation)[i];
+        for (size_t j=0; j < scales[0].size(); j++) {
+            semantic_segmentation_tensor_values(i, j) = (*semantic_segmentation)[i][j];
+        }
     }
   }
 
@@ -361,6 +363,8 @@ void TensorflowGraphExecutor::batchFullForwardPass(
   }
 }
 
+
+// 4D version for semantics
 template <>
 void TensorflowGraphExecutor::batchFullForwardPass(
     const std::vector<Array4D>& inputs,
@@ -371,7 +375,7 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     const std::string& reconstruction_values_name,
     std::vector<std::vector<float> >& descriptors,
     std::vector<Array3D>& reconstructions,
-    const std::shared_ptr<std::vector<float>> semantic_segmentation,
+    const std::shared_ptr<std::vector<std::vector<float>>> semantic_segmentation,
     const std::string& semantic_segmentation_tensor_name) const {
   CHECK(!inputs.empty());
   descriptors.clear();
@@ -419,15 +423,17 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     // TODO: probably don't need vector of vectors here since semantic_segmentation is only a int value and not 3 ints like scales?
     auto semantic_segmentation_shape = TensorShape();
     semantic_segmentation_shape.AddDim((int64) inputs.size());
-    semantic_segmentation_shape.AddDim(1u);
+    semantic_segmentation_shape.AddDim(66u);
     //semantic_segmentation_shape.AddDim(1u);
     Tensor semantic_segmentation_tensor(DT_FLOAT, semantic_segmentation_shape);
 
   if (semantic_segmentation != nullptr) {
     // put values in the input tensor
-    auto semantic_segmentation_tensor_values = semantic_segmentation_tensor.tensor<float, 1>();
+    auto semantic_segmentation_tensor_values = semantic_segmentation_tensor.tensor<float, 2>();
     for (size_t i=0; i < semantic_segmentation->size(); i++) {
-        semantic_segmentation_tensor_values(i) = (*semantic_segmentation)[i];
+        for (size_t j=0; j < scales[0].size(); j++) {
+            semantic_segmentation_tensor_values(i, j) = (*semantic_segmentation)[i][j];
+        }
     }
   }
 

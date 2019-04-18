@@ -59,7 +59,8 @@ void CNNDescriptor::describe4D(SegmentedCloud* segmented_cloud_ptr) {
   BENCHMARK_RECORD_VALUE("SM.Worker.Describe.NumSegmentsTotal",
                          segmented_cloud_ptr->getNumberOfValidSegments());
   std::vector<tf_graph_executor::Array4D> batch_nn_input;
-  std::shared_ptr<std::vector<float>> semantic_segmentation;
+  std::vector<float> segment_semantic_segmentation;
+  std::shared_ptr<std::vector<std::vector<float>>> semantic_segmentation = std::make_shared<std::vector<std::vector<float>>>();
   std::vector<Id> described_segment_ids;
   std::vector<PclPoint> scales;
   std::vector<PclPoint> thresholded_scales;
@@ -160,12 +161,23 @@ void CNNDescriptor::describe4D(SegmentedCloud* segmented_cloud_ptr) {
           * static_cast<float>(n_voxels_y_dim_ - 1u);
       point_new.z = (point.z - point_min.z) / thresholded_scale.z
           * static_cast<float>(n_voxels_z_dim_ - 1u);
+      point_new.rgb = point.rgb;
 
       rescaled_point_cloud.points.push_back(point_new);
 
-      // store semantic segmentation class of each point in vector 
-      semantic_segmentation->push_back(compute_color_to_class_id(point.semantics_rgb));
+      // store semantic segmentation class of each point in vector
+      // TODO: shouldn't I store distribution of classes for this segment in the 65D vector?
+      LOG(INFO) << "compute_color_to_class_id(point.semantics_rgb): " << std::to_string(compute_color_to_class_id(point.semantics_rgb));
+      segment_semantic_segmentation.push_back(compute_color_to_class_id(point.semantics_rgb));
     }
+    // TODO: make counts float values
+    std::vector<float> class_counts(66, 0);
+    for (auto& s : segment_semantic_segmentation) {
+        CHECK_LE(s, 66) << "Semantic class id must be less than 66 for Mapillary Vistas dataset!";
+        class_counts[s] += 1;
+    }
+    semantic_segmentation->push_back(class_counts);
+
     rescaled_point_cloud.width = 1;
     rescaled_point_cloud.height = rescaled_point_cloud.points.size();
 
@@ -190,7 +202,15 @@ void CNNDescriptor::describe4D(SegmentedCloud* segmented_cloud_ptr) {
           ++n_occupied_voxels;
         }
         // TODO: change color values to the real values
-        nn_input.container[ind_x][ind_y][ind_z] = std::vector<double>{1.0, 22.0, 23.0, 24.0};
+        uint8_t r, g, b;
+        uint32_t point_rgb = *reinterpret_cast<const int*>(&point.rgb);
+        r = (point_rgb >> 16) & 0xff;
+        g = (point_rgb >> 8) & 0xff;
+        b = point_rgb & 0xff;
+
+        // TODO: confirm I need to use r, g, b here and not point.r, point.g, point.b
+        // LOG(INFO) << "point.r, point.b, point.g: " << std::to_string(point.r) << ", " << std::to_string(point.b) << ", " << std::to_string(point.g);
+        nn_input.container[ind_x][ind_y][ind_z] = std::vector<double>{1.0, r, g, b};
         }
       }
     nums_occupied_voxels.push_back(n_occupied_voxels);
@@ -224,9 +244,11 @@ void CNNDescriptor::describe4D(SegmentedCloud* segmented_cloud_ptr) {
     } else {
       std::vector<tf_graph_executor::Array4D> mini_batch;
       std::vector<std::vector<float> > mini_batch_scales;
+      std::shared_ptr<std::vector<std::vector<float>>> mini_batch_semantic_segmentation = std::make_shared<std::vector<std::vector<float>>>();
       for (size_t i = 0u; i < batch_nn_input.size(); ++i) {
         mini_batch.push_back(batch_nn_input[i]);
         mini_batch_scales.push_back(scales_as_vectors[i]);
+        mini_batch_semantic_segmentation->push_back((*semantic_segmentation)[i]);  // TODO: if I want to use the distribution of classes here,
         if (mini_batch.size() == mini_batch_size_) {
           std::vector<std::vector<float> > mini_batch_cnn_descriptors;
           std::vector<tf_graph_executor::Array3D> mini_batch_reconstructions;
@@ -238,7 +260,9 @@ void CNNDescriptor::describe4D(SegmentedCloud* segmented_cloud_ptr) {
                                                 kFeaturesTensorName,
                                                 kReconstructionTensorName,
                                                 mini_batch_cnn_descriptors,
-                                                mini_batch_reconstructions);
+                                                mini_batch_reconstructions,
+                                                mini_batch_semantic_segmentation,
+                                                kSemanticSegmentationTensorName);
 
           cnn_descriptors.insert(cnn_descriptors.end(),
                                  mini_batch_cnn_descriptors.begin(),
@@ -247,6 +271,7 @@ void CNNDescriptor::describe4D(SegmentedCloud* segmented_cloud_ptr) {
                                  mini_batch_reconstructions.begin(),
                                  mini_batch_reconstructions.end());
           mini_batch_scales.clear();
+          mini_batch_semantic_segmentation->clear();
           mini_batch.clear();
         }
       }
@@ -261,7 +286,9 @@ void CNNDescriptor::describe4D(SegmentedCloud* segmented_cloud_ptr) {
                                               kFeaturesTensorName,
                                               kReconstructionTensorName,
                                               mini_batch_cnn_descriptors,
-                                              mini_batch_reconstructions);
+                                              mini_batch_reconstructions,
+                                              mini_batch_semantic_segmentation,
+                                              kSemanticSegmentationTensorName);
 
         cnn_descriptors.insert(cnn_descriptors.end(),
                                mini_batch_cnn_descriptors.begin(),

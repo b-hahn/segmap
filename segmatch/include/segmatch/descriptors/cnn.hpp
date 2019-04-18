@@ -14,14 +14,16 @@ namespace segmatch {
 class CNNDescriptor : public Descriptor {
  public:
   //AutoencoderDescriptor () {};
-  explicit CNNDescriptor(const DescriptorsParameters& parameters, bool use_color, bool use_semantic_segmentation) : params_(parameters) {
+  explicit CNNDescriptor(const DescriptorsParameters& parameters/* , bool use_color, bool use_semantic_segmentation */) : params_(parameters) {
     const std::string model_folder = parameters.cnn_model_path;
+    const std::string model_version = parameters.model_version;
     const std::string semantics_nn_folder = parameters.semantics_nn_path;
 
     LOG(INFO) << "Loading CNN model in " + model_folder;
+    std::string model_name = (model_version == "" ? "model" : ("model-" +  model_version)) + ".ckpt.meta";
     graph_executor_.reset(new tf_graph_executor::TensorflowGraphExecutor(
-        model_folder + "model.ckpt.meta"));
-    graph_executor_->loadCheckpoint(model_folder + "model.ckpt");
+        model_folder + model_name));
+    graph_executor_->loadCheckpoint(model_folder + model_name);
 
     aligned_segments_ = SegmentedCloud(false);
 
@@ -103,7 +105,7 @@ class CNNDescriptor : public Descriptor {
   const std::string kFeaturesTensorName = "OutputScope/descriptor_read";
   const std::string kSemanticsOutputName = "OutputScope/output_read";
   const std::string kReconstructionTensorName = "ReconstructionScopeAE/ae_reconstruction_read";
-  const std::string kSemanticSegmentationTensorName = "semantic_segmentation";
+  const std::string kSemanticSegmentationTensorName = "semantics"; //"semantic_segmentation";
   const std::string kScalesTensorName = "scales";
 
 }; // class CNNDescriptor
