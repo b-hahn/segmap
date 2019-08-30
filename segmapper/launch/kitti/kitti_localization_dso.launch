@@ -16,8 +16,8 @@
   <rosparam command="load" file="$(find segmapper)/launch/kitti/kitti_localization.yaml"/>
   
   <!-- Target cloud -->
-  <!-- <arg name="target_cloud" value="/home/ben/segmap_ws/src/dso_to_ros/pcl_data.pcd"/> -->
-  <arg name="target_cloud" value="/home/ben/segmap_ws/src/dso_to_ros/27_230to260_all.pcd"/>
+  <arg name="target_cloud" value="/home/bhahn/.segmap/kitti/kitti_2011_10_03_stereo_first_color.pcd"/>
+  <!-- <arg name="target_cloud" value="/home/ben/segmap_ws/src/dso_to_ros/27_230to260_all.pcd"/> -->
   <!-- <arg name="target_cloud" value="$(env HOME)/.segmap/kitti/drive27_target_map.pcd"/> -->
   <rosparam param="/SegMapper/SegMatchWorker/target_cloud_filename" subst_value="True">$(arg target_cloud)</rosparam>
   

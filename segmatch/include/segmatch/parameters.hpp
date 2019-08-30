@@ -30,6 +30,11 @@ struct DescriptorsParameters {
   // CNN parameters.
   std::string cnn_model_path = "MUST_BE_SET";
   std::string semantics_nn_path = "MUST_BE_SET";
+
+  bool use_color = false;
+  bool use_semantic_segmentation = false;
+
+  std::string model_version = "MUST_BE_SET";
 }; // struct DescriptorsParameters
 
 struct SegmenterParameters {
@@ -42,9 +47,9 @@ struct SegmenterParameters {
   // Parameters specific for the SmoothnessConstraint growing policy.
   float sc_smoothness_threshold_deg;
   float sc_curvature_threshold;
-  
+
   // Parameters specific for the RGB regoin growing policy.
-  int rgb_region_growing_distance_threshold;
+  float rgb_region_growing_distance_threshold;
   int rgb_region_growing_point_color_threshold;
   int rgb_region_growing_region_color_threshold;
 

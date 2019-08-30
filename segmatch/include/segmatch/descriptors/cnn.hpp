@@ -20,10 +20,10 @@ class CNNDescriptor : public Descriptor {
     const std::string semantics_nn_folder = parameters.semantics_nn_path;
 
     LOG(INFO) << "Loading CNN model in " + model_folder;
-    std::string model_name = (model_version == "" ? "model" : ("model-" +  model_version)) + ".ckpt.meta";
+    std::string model_name = (model_version == "" ? "model" : ("model-" +  model_version));
     graph_executor_.reset(new tf_graph_executor::TensorflowGraphExecutor(
-        model_folder + model_name));
-    graph_executor_->loadCheckpoint(model_folder + model_name);
+        model_folder + model_name + ".ckpt.meta"));
+    graph_executor_->loadCheckpoint(model_folder + model_name+ ".ckpt");
 
     aligned_segments_ = SegmentedCloud(false);
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <launch>
-  
+  <rosparam>use_sim_time: true</rosparam>
   <arg name="respawn_value" default="false" /> <!-- boolean: true, false -->
 
   <!-- ROS parameters -->
@@ -10,7 +10,13 @@
 
   <!-- CNN model path -->
   <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64/"/>
+  <!-- <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64_standard/2019-04-12-09-55-07/"/> -->
+  <!-- <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64_standard/2019-04-23-19-28-41/"/> -->
+  <!-- <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64_color_semantics/2019-04-16-11-42-33/"/> -->
+  <!-- <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64_color_semantics/2019-04-29-17-08-50/"/> -->
   <rosparam param="/SegMapper/SegMatchWorker/SegMatch/Descriptors/cnn_model_path" subst_value="True">$(arg cnn_model_path)</rosparam>
+  <arg name="model_version" value="''"/>
+  <rosparam param="/SegMapper/SegMatchWorker/SegMatch/Descriptors/model_version" subst_value="True">$(arg model_version)</rosparam>
 
   <!-- Semantics nn path -->
   <arg name="semantics_nn_path" value="$(env HOME)/.segmap/trained_models/segmap64_semantics/"/>

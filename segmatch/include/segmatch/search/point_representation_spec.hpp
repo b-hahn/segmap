@@ -52,6 +52,7 @@ template <typename PointDefault>
   // TODO: move this function somewhere else
   static float rgb_to_hue(uint32_t r, uint32_t g, uint32_t b)
   {
+    std::cout << "Converting rgb to hue!" << std::endl;
     float hue = 0;
     std::vector<float> rgb;
     rgb.push_back(r / 255.0f);
@@ -105,17 +106,20 @@ template <typename PointDefault>
           // float hue = rgb_to_hue(p.r, p.g, p.b);
           // out[3] = hue;
           // uint32_t semantic_rgb = ((uint32_t)p.semantics_r << 16 | (uint32_t)p.semantics_g << 8 | (uint32_t)p.semantics_b);
-          uint32_t semantic_rgb = ((uint32_t)111 << 16 | (uint32_t)112 << 8 | (uint32_t)113);
-          out[3] = *reinterpret_cast<float*>(&semantic_rgb);
+          // uint32_t semantic_rgb = ((uint32_t)111 << 16 | (uint32_t)112 << 8 | (uint32_t)113);
+          // out[3] = static_cast<float>(semantic_rgb);
+          out[3] = static_cast<float>(p.semantics_rgb);
+        //   out[3] = *reinterpret_cast<float*>(&semantic_rgb);
 
           // p.semantics_rgb is equal to the constructor default value here if the points I'm reading (or the map) don't
           // contain the field 'semantics_rgb'
-          std::cout << "in copyToFloatArray semantic_rgb:" << std::to_string(p.semantics_rgb) << std::endl;
-          std::cout << "in copyToFloatArray rgb:" << std::to_string(p.rgb) << std::endl;
-          std::cout << "in copyToFloatArray out[3]:" << std::to_string(out[3]) << " or " << out[3] << " or "
-                    << std::to_string(semantic_rgb) << std::endl;
+        //   std::cout << "in copyToFloatArray semantic_rgb:" << std::to_string(p.semantics_rgb) << std::endl;
+        //   std::cout << "in copyToFloatArray rgb:" << std::to_string(p.rgb) << std::endl;
+        //   std::cout << "in copyToFloatArray out[3]:" << std::to_string(out[3]) << " or " << out[3] << " or "
+        //             << std::to_string(semantic_rgb) << std::endl;
           //   std::cout << "in copyToFloatArray:" << std::to_string(p.r) << ", " << std::to_string(p.g) << ", "
           //             << std::to_string(p.b) << std::endl;
+        //   std::cout << "out[3] = " << std::to_string(out[3]) << " which should equal " << std::to_string(semantic_rgb) << std::endl;
       }
 
       void printNumDims() const { std::cout << "num dims from inside class: " << nr_dimensions_ << std::endl; }

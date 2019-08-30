@@ -64,6 +64,79 @@ struct L2_Color
     static constexpr float hue_weight = 0.01;
 };
 
+template <class T> struct L2_Copy {
+    typedef bool is_kdtree_distance;
+
+    typedef T ElementType;
+    typedef typename flann::Accumulator<T>::Type ResultType;
+
+    template <typename Iterator1, typename Iterator2>
+    ResultType operator()(Iterator1 a, Iterator2 b, size_t size, ResultType /*worst_dist*/ = -1) const {
+        ResultType result = ResultType();
+        ResultType diff;
+        for (size_t i = 0; i < size; ++i) {
+            diff = *a++ - *b++;
+            result += diff * diff;
+        }
+        if (*a > 200) {
+        std::cout << std::to_string(*(a)) << "," << std::to_string(*(a + 1)) << "," << std::to_string(*(a + 2)) << ","
+                  << std::to_string(*(a + 3)) << " and " << std::to_string(*b) << "," << std::to_string(*(b + 1)) << "," << std::to_string(*(b + 2)) << ","
+                  << std::to_string(*(b + 3)) << " and size = " << std::to_string(size) << std::endl;
+        std::cout << __PRETTY_FUNCTION__ << std::endl;
+        }
+
+        return result;
+    }
+
+    template <typename U, typename V> inline ResultType accum_dist(const U &a, const V &b, int) const {
+        return (a - b) * (a - b);
+    }
+};
+
+template<class T>
+struct L2_Semantics
+{
+    typedef bool is_kdtree_distance;
+
+    typedef T ElementType;
+    typedef typename flann::Accumulator<T>::Type ResultType;
+
+    ResultType semantic_class_penalty = static_cast<ResultType>(5.0);
+    double c1 = 0;
+
+
+    template <typename K> std::string type_name();
+    template <typename Iterator1, typename Iterator2>
+    ResultType operator()(Iterator1 a, Iterator2 b, size_t size, ResultType /*worst_dist*/ = -1) const
+    {
+        ResultType result = ResultType();
+        ResultType diff;
+
+        // use unweighted squared difference for x, y and z coords
+        for(size_t i = 0; i < 3; ++i ) {
+            diff = *a++ - *b++;
+            result += diff*diff;
+        }
+
+        // add penalty if semantic class is different
+        // either additive or multiplicative
+        if (abs(*a - *b) > 1) {
+          result += semantic_class_penalty;
+          // results *= semantic_class_penalty;
+        }
+        // exit(0);
+
+        // std::cout << "xyz_result: " << xyz_result << " total results: " << result << "(" << xyz_result / result * 100 << "%)\n";
+        return result;
+    }
+
+    template <typename U, typename V>
+    inline ResultType accum_dist(const U& a, const V& b, int) const
+    {
+        return (a-b)*(a-b);
+    }
+};
+
 
 template<typename PointT, typename Dist = ::flann::L2_Simple<float>>
 class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::KdTree<PointT> */
@@ -218,6 +291,8 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
       float tolerance, std::vector<pcl::PointIndices> &clusters,
       unsigned int min_pts_per_cluster = 1, unsigned int max_pts_per_cluster = (std::numeric_limits<int>::max) ());
 
+    /** \brief A FLANN index object. */
+    boost::shared_ptr<FLANNIndex> flann_index_;
   protected:
     /** \brief The input point cloud dataset containing the points we need to use. */
     PointCloudConstPtr input_;
@@ -257,8 +332,6 @@ class SemanticKdTreeFLANN : public pcl::search::Search<PointT> /* : public pcl::
     /** \brief Class getName method. */
     virtual const std::string& getName() const { return ("SemanticKdTreeFLANN"); }
 
-    /** \brief A FLANN index object. */
-    boost::shared_ptr<FLANNIndex> flann_index_;
 
     /** \brief Internal pointer to data. */
     boost::shared_array<float> cloud_;

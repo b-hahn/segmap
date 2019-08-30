@@ -375,7 +375,8 @@ class Preprocessor(object):
             segment = segment[oob_idx2, :]
             segment_color = segment_color[oob_idx1, :]
             segment_color = segment_color[oob_idx2, :]
-            # TODO: semantic class is stored as integer (0-65 for mapillary vistas). Change either to one-hot somewhere, and/or accumulate the number of classes for each point in a segment
+            # TODO: semantic class is stored as integer (0-65 for mapillary vistas). Change either to one-hot somewhere, and/or
+            # accumulate the number of classes for each point in a segment
             segment_semantic_class = segment_semantic_class[oob_idx1]
             segment_semantic_class = segment_semantic_class[oob_idx2]
 
@@ -392,6 +393,9 @@ class Preprocessor(object):
                                         [0, segment_color[j]])
                 voxel_color_counter[segment[j, 0], segment[j, 1],
                                     segment[j, 2]] += 1
+                voxelized_segments_semantic_classes[i, int(segment_semantic_class[j])] += 1
+            # print("----------> segment_semantic_class: ", segment_semantic_class)
+            # print("----------> voxelized_segments_semantic_classes[i, :]: ", voxelized_segments_semantic_classes[i, :])
 
             # compute mean color
             voxelized_segments[i, segment[:, 0], segment[:, 1], segment[:, 2], 1:] /= voxel_color_counter[segment[:, 0], segment[:, 1], segment[:, 2]][:, np.newaxis]

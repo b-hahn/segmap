@@ -176,6 +176,7 @@ class Dataset(object):
         # the merged class with the new class name
         new_matches = []
         for match in self.matches:
+            print(match)
             new_match = []
             for cls in match:
                 if relevant[cls]:
@@ -193,12 +194,14 @@ class Dataset(object):
     def _combine_classes(self):
         # filtered out non-unique matches
         unique_matches = set()
+        print(len(self.matches))
         for match in self.matches:
+            print(match)
             unique_match = []
             for cls in match:
                 if cls not in unique_match:
                     unique_match.append(cls)
-
+            print(len(unique_match))
             if len(unique_match) > 1:
                 unique_match = tuple(sorted(unique_match))
                 if unique_match not in unique_matches:

@@ -53,6 +53,9 @@ void RGBRegionGrowingSegmenter<ClusteredPointT>::segment(
   //     cloud, points_neighbors_provider.getPclSearchObject(), radius_for_growing_, cluster_indices,
   //     min_segment_size_,max_segment_size_);
 
+  std::cout << "distance_threshold_: " << distance_threshold_ << std::endl;
+  std::cout << "region_color_threshold_: " << region_color_threshold_ << std::endl;
+  std::cout << "point_color_threshold_: " << point_color_threshold_ << std::endl;
   pcl::RegionGrowingRGB<ClusteredPointT> reg;
   reg.setInputCloud (cloud_ptr);
   reg.setIndices (indices/* use all points */);
@@ -61,6 +64,7 @@ void RGBRegionGrowingSegmenter<ClusteredPointT>::segment(
   reg.setPointColorThreshold (point_color_threshold_);
   reg.setRegionColorThreshold (region_color_threshold_);
   reg.setMinClusterSize (min_segment_size_);
+  reg.setMaxClusterSize (max_segment_size_);
 
   reg.extract (cluster_indices);
 

@@ -29,9 +29,11 @@ configfile = args.train_config
 config = Config(configfile)
 config.bins = args.bins
 config.ae_model = args.ae_model
+# config.base_dir = os.path.join(config.base_dir, config.cnn_model_folder, config.training_timestamp)
 
 current_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 # load dataset and preprocessor
+print(config.cnn_test_folder, " and ", config.base_dir)
 dataset = Dataset(
     folder=config.cnn_test_folder,
     base_dir=config.base_dir,
@@ -104,6 +106,7 @@ if config.ae_model:
 tf.reset_default_graph()
 
 # restore variable names from previous session
+print("Loading model{}.ckpt.meta ...".format("-" + config.checkpoint_version if config.checkpoint_version else ""))
 saver = tf.train.import_meta_graph(
     os.path.join(config.cnn_model_folder, config.training_timestamp, "model{}.ckpt.meta".format("-" + config.checkpoint_version if config.checkpoint_version else ""))
 )
@@ -119,7 +122,14 @@ semantics =  cnn_graph.get_tensor_by_name("semantics:0") if config.use_semantics
 
 cnn_features = []
 with tf.Session() as sess:
-    saver.restore(sess, tf.train.latest_checkpoint(os.path.join(config.cnn_model_folder, config.training_timestamp)))
+    saver.restore(
+        sess,
+        os.path.join(
+            config.cnn_model_folder, config.training_timestamp,
+            "model{}.ckpt".format(
+                "-" + config.checkpoint_version if config
+                .checkpoint_version else "")))
+    # saver.restore(sess, tf.train.latest_checkpoint(os.path.join(config.cnn_model_folder, config.training_timestamp)))
 
     for batch in range(gen_test.n_batches):
         batch_segments, _, batch_semantics = gen_test.next()
@@ -136,6 +146,173 @@ with tf.Session() as sess:
             cnn_features.append(batch_descriptor)
 
 feature_sets.append(np.array(cnn_features))
+
+
+# =====================================================================================
+# STANDARD
+#  read config file
+configfile = "/home/bhahn/.segmap/trained_models/segmap64_standard/2019-04-23-19-28-41/training_config_2019-04-23-19-28-41.ini"
+config = Config(configfile)
+config.bins = args.bins
+config.ae_model = args.ae_model
+# config.base_dir = os.path.join(config.base_dir, config.cnn_model_folder, config.training_timestamp)
+
+current_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+# load dataset and preprocessor
+# print(config.cnn_test_folder, " and ", config.base_dir)
+# dataset = Dataset(
+#     folder=config.cnn_test_folder,
+#     base_dir=config.base_dir,
+#     keep_match_thresh=0.7
+# )
+
+# segments, positions, classes, n_classes, _, _, _, segments_colors, segments_semantics = dataset.load()
+# # segments, positions, classes, n_classes, _, _, _, _, _ = dataset.load()
+# duplicate_classes = dataset.duplicate_classes
+# duplicate_ids = dataset.duplicate_ids
+
+preprocessor = get_default_preprocessor(config)
+if config.use_color and config.use_semantics:
+    preprocessor.init_segments(segments, classes, positions=positions, segments_colors=segments_colors, segments_semantic_classes=segments_semantics)
+else:
+    preprocessor.init_segments(segments, classes, positions=positions)
+
+gen_test = Generator(
+    preprocessor,
+    np.arange(len(segments)),
+    n_classes,
+    train=False,
+    batch_size=config.batch_size,
+    shuffle=False,
+)
+# cnn features 2
+tf.reset_default_graph()
+
+# restore variable names from previous session
+print("Loading model{}.ckpt.meta ...".format("-" + config.checkpoint_version if config.checkpoint_version else ""))
+saver = tf.train.import_meta_graph(
+    os.path.join(config.cnn_model_folder, config.training_timestamp, "model{}.ckpt.meta".format("-" + config.checkpoint_version if config.checkpoint_version else ""))
+)
+
+# get key tensorflow variables
+cnn_graph = tf.get_default_graph()
+
+cnn_input = cnn_graph.get_tensor_by_name("InputScope/input:0")
+scales = cnn_graph.get_tensor_by_name("scales:0")
+descriptor = cnn_graph.get_tensor_by_name("OutputScope/descriptor_read:0")
+semantics =  cnn_graph.get_tensor_by_name("semantics:0") if config.use_semantics else None
+
+
+cnn_features = []
+with tf.Session() as sess:
+    saver.restore(
+        sess,
+        os.path.join(
+            config.cnn_model_folder, config.training_timestamp,
+            "model{}.ckpt".format(
+                "-" + config.checkpoint_version if config
+                .checkpoint_version else "")))
+    # saver.restore(sess, tf.train.latest_checkpoint(os.path.join(config.cnn_model_folder, config.training_timestamp)))
+
+    for batch in range(gen_test.n_batches):
+        batch_segments, _, batch_semantics = gen_test.next()
+        if config.use_semantics:
+            feed_dict = {cnn_input: batch_segments, scales: preprocessor.last_scales, semantics: batch_semantics}
+        else:
+            feed_dict = {cnn_input: batch_segments, scales: preprocessor.last_scales}
+        batch_descriptors = sess.run(
+            descriptor,
+            feed_dict=feed_dict,
+        )
+
+        for batch_descriptor in batch_descriptors:
+            cnn_features.append(batch_descriptor)
+
+feature_sets.append(np.array(cnn_features))
+
+# =====================================================================================
+# COLOR+SEMANTICS
+#  read config file
+# configfile = "/home/bhahn/.segmap/trained_models/segmap64_standard/2019-04-23-19-28-41/training_config_2019-04-23-19-28-41.ini"
+configfile = "/home/bhahn/.segmap/trained_models/segmap64_color_semantics/2019-05-08-16-25-34/training_config_2019-05-08-16-25-34.ini"
+config = Config(configfile)
+config.bins = args.bins
+config.ae_model = args.ae_model
+# config.base_dir = os.path.join(config.base_dir, config.cnn_model_folder, config.training_timestamp)
+
+current_time = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+# load dataset and preprocessor
+# print(config.cnn_test_folder, " and ", config.base_dir)
+# dataset = Dataset(
+#     folder=config.cnn_test_folder,
+#     base_dir=config.base_dir,
+#     keep_match_thresh=0.7
+# )
+
+# segments, positions, classes, n_classes, _, _, _, segments_colors, segments_semantics = dataset.load()
+# # segments, positions, classes, n_classes, _, _, _, _, _ = dataset.load()
+# duplicate_classes = dataset.duplicate_classes
+# duplicate_ids = dataset.duplicate_ids
+
+preprocessor = get_default_preprocessor(config)
+if config.use_color and config.use_semantics:
+    preprocessor.init_segments(segments, classes, positions=positions, segments_colors=segments_colors, segments_semantic_classes=segments_semantics)
+else:
+    preprocessor.init_segments(segments, classes, positions=positions)
+
+gen_test = Generator(
+    preprocessor,
+    np.arange(len(segments)),
+    n_classes,
+    train=False,
+    batch_size=config.batch_size,
+    shuffle=False,
+)
+# cnn features 2
+tf.reset_default_graph()
+
+# restore variable names from previous session
+print("Loading model{}.ckpt.meta ...".format("-" + config.checkpoint_version if config.checkpoint_version else ""))
+saver = tf.train.import_meta_graph(
+    os.path.join(config.cnn_model_folder, config.training_timestamp, "model{}.ckpt.meta".format("-" + config.checkpoint_version if config.checkpoint_version else ""))
+)
+
+# get key tensorflow variables
+cnn_graph = tf.get_default_graph()
+
+cnn_input = cnn_graph.get_tensor_by_name("InputScope/input:0")
+scales = cnn_graph.get_tensor_by_name("scales:0")
+descriptor = cnn_graph.get_tensor_by_name("OutputScope/descriptor_read:0")
+semantics =  cnn_graph.get_tensor_by_name("semantics:0") if config.use_semantics else None
+
+
+cnn_features = []
+with tf.Session() as sess:
+    saver.restore(
+        sess,
+        os.path.join(
+            config.cnn_model_folder, config.training_timestamp,
+            "model{}.ckpt".format(
+                "-" + config.checkpoint_version if config
+                .checkpoint_version else "")))
+    # saver.restore(sess, tf.train.latest_checkpoint(os.path.join(config.cnn_model_folder, config.training_timestamp)))
+
+    for batch in range(gen_test.n_batches):
+        batch_segments, _, batch_semantics = gen_test.next()
+        if config.use_semantics:
+            feed_dict = {cnn_input: batch_segments, scales: preprocessor.last_scales, semantics: batch_semantics}
+        else:
+            feed_dict = {cnn_input: batch_segments, scales: preprocessor.last_scales}
+        batch_descriptors = sess.run(
+            descriptor,
+            feed_dict=feed_dict,
+        )
+
+        for batch_descriptor in batch_descriptors:
+            cnn_features.append(batch_descriptor)
+
+feature_sets.append(np.array(cnn_features))
+
 
 # precompute last ids and the corresponding segment sizes for sequences
 last_ids = []
@@ -163,6 +340,7 @@ all_ranks = []
 all_sizes = []
 
 n_sets = len(feature_sets)
+print("n_sets:",n_sets)
 for s in range(n_sets):
     features = feature_sets[s]
     last_features = features[last_ids]
@@ -177,7 +355,8 @@ for s in range(n_sets):
             segment_ids = np.where(sequence == duplicate_classes)[0]
 
             for segment_id in segment_ids:
-                dists = np.linalg.norm(last_features - features[segment_id], axis=1)
+                dists = np.linalg.norm(
+                    last_features - features[segment_id], axis=1)
                 order_ids = np.argsort(dists)
 
                 found_self = False
@@ -194,8 +373,7 @@ for s in range(n_sets):
                         found_self = True
 
                 sizes.append(
-                    float(segments[segment_id].shape[0]) / last_sizes[sequence]
-                )
+                    float(segments[segment_id].shape[0]) / last_sizes[sequence])
 
     all_ranks.append(ranks)
     all_sizes.append(sizes)
@@ -226,15 +404,15 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import matplotlib.lines as mlines
 
-fig_width_pt = 252
+fig_width_pt = 1000
 inches_per_pt = 1.0 / 72.27  # Convert pt to inch
 fig_width = fig_width_pt * inches_per_pt
-fig_height = fig_width * 0.9
+fig_height = fig_width * 3/4  # * 9/16
 fig_size = [fig_width, fig_height]
 
 plt.figure(figsize=(fig_width, fig_height))
 
-fontsize = 8
+fontsize = 20
 params = {
     "backend": "ps",
     "axes.labelsize": fontsize,
@@ -252,7 +430,7 @@ plt.rcParams.update(params)
 if config.ae_model:
     colors = ['green', 'orange', 'red']
 else:
-    colors = ['green', 'red']
+    colors = ['green', 'orange', 'red', 'cyan']
 
 xlim = 0
 xticks = []
@@ -262,7 +440,8 @@ for i, b in enumerate(bins):
     xticks.append(np.mean(positions))
     bp = plt.boxplot(b, 0, "", positions=positions, widths=0.5)
 
-    lw = 0.7
+    lw = 2
+    # lw = 0.7
     for i in range(n_sets):
         plt.setp(bp["boxes"][i], color=colors[i], linewidth=lw)
         plt.setp(bp["caps"][i*2], color=colors[i], linewidth=lw)
@@ -275,7 +454,7 @@ plt.yscale("log")
 
 ax = plt.gca()
 ax.set_xlim([0, xlim + 1])
-ax.set_ylim([1, 6000])
+ax.set_ylim([-1, 2000])
 ax.yaxis.set_major_formatter(mticker.ScalarFormatter())
 
 bin_edges = bin_edges * 100
@@ -284,16 +463,19 @@ ax.set_xticks(xticks)
 ax.tick_params(axis="both", direction="in")
 
 lG = mlines.Line2D([], [], color="green", label="Eigen", linewidth=lw)
-lR = mlines.Line2D([], [], color="red", label="\\textit{SegMap}", linewidth=lw)
-if config.ae_model:
-    lO = mlines.Line2D([], [], color="orange", label="AE", linewidth=lw)
-    handles = [lG, lO, lR]
-else:
-    handles = [lG, lR]
+lO = mlines.Line2D([], [], color="orange", label="SegMap original", linewidth=lw)
+lR = mlines.Line2D([], [], color="red", label="SegMap DSO", linewidth=lw)
+lC = mlines.Line2D([], [], color="cyan", label="SegMap DSO w/ color+semantics", linewidth=lw)
+# if config.ae_model:
+#     lO = mlines.Line2D([], [], color="orange", label="AE", linewidth=lw)
+#     handles = [lG, lO, lR]
+# else:
+#     handles = [lG, lR]
+handles = [lG, lO, lR, lC]
 
-plt.legend(handles=handles, loc=3)
+plt.legend(handles=handles, loc='upper right')
 
-plt.xlabel("Segment completness [\%]")
+plt.xlabel("Segment completness [%]")
 plt.ylabel("k-neighbours needed [-]")
 plt.tight_layout()
 
@@ -301,4 +483,3 @@ print(config.cnn_test_folder, config.cnn_model_folder)
 
 plt.savefig(os.path.join(config.cnn_model_folder, config.training_timestamp, "acc_versus_size_{}.pdf".format(current_time)))
 # copyfile(os.path.join(config.cnn_model_folder, configfile), os.path.join(config.cnn_model_folder, 'train_config_' + current_time + '.ini'))
-

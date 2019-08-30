@@ -58,6 +58,15 @@ class SegMatchWorker {
     return segmatch_.getRecognizers()[track_id]->getCandidateTransformations().front();
   }
 
+  std::shared_ptr<segmatch::SegmentedCloud> returnTargetSegmentsPtr() {
+      return std::make_shared<segmatch::SegmentedCloud>(segments_database_);
+  }
+
+  std::shared_ptr<segmatch::SegmentedCloud> returnSourceSegmentsPtr() {
+      return std::make_shared<segmatch::SegmentedCloud>(segmatch_.getSourceAsSegmentedCloud());
+  }
+
+
  private:
 
   void loadTargetCloud();

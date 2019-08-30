@@ -13,6 +13,7 @@ SegMapper: {
 
     odom_frame: "world",
     sensor_frame: "cam02",
+    # sensor_frame: "velodyne",
 
     assembled_cloud_sub_topic: "/velodyne_points",
     trajectory_pub_topic: "trajectory",
@@ -27,8 +28,8 @@ SegMapper: {
     publish_full_map: false,
     map_publication_rate_hz: 3,
 
-    remove_ground_from_local_map: true,
-    ground_distance_to_robot_center_m: 1.70,
+    remove_ground_from_local_map: false,
+    ground_distance_to_robot_center_m: 1.6,
   },
 
   # SegMatchWorker parameters
@@ -62,7 +63,7 @@ SegMapper: {
     check_pose_lies_below_segments: false,
 
     LocalMap: {
-      voxel_size_m: 0.10,
+      voxel_size_m: 0.1,
       min_points_per_voxel: 1,
       radius_m: 50,
       min_vertical_distance_m: -999.0,
@@ -72,24 +73,29 @@ SegMapper: {
 
     Segmenters: {
       segmenter_type: "IncrementalEuclideanDistance", # IncrementalSmoothnessConstraints, SimpleSmoothnessConstraints
-      min_cluster_size: 20,
-      max_cluster_size: 15000,
-      radius_for_growing: 0.8,
+      # segmenter_type: "SimpleEuclideanDistance",
+      # segmenter_type: "RGBRegionGrowing",
+      # segmenter_type: "SemanticEuclideanClustering",
+      min_cluster_size: 50,
+      max_cluster_size: 5000,
+      radius_for_growing: 0.4,
 
       RGBRegionGrowing: {
-        distance_threshold: 10,
+        distance_threshold: 0.6,
         point_color_threshold: 6,
         region_color_threshold: 5,
       }
     },
 
     Descriptors: {
-      descriptor_types: ["CNN"]
+      descriptor_types: ["CNN"],
+      use_color: false,
+      use_semantic_segmentation: false
     },
 
     Classifier: {
      threshold_to_accept_match: 0.65,
-     n_nearest_neighbours: 120, #25
+     n_nearest_neighbours: 20,
      knn_feature_dim: 64, #32
      enable_two_stage_retrieval: false,
      apply_hard_threshold_on_feature_distance: false,
@@ -103,7 +109,7 @@ SegMapper: {
 
     GeometricConsistency: {
       recognizer_type: "Simple", #"Simple", "Partitioned"
-      resolution: 0.6,
+      resolution: 1.5,
       min_cluster_size: 6,
       max_consistency_distance_for_caching: 10.0,
     }

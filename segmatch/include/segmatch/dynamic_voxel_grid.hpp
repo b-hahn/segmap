@@ -59,7 +59,7 @@ namespace segmatch {
 static uint8_t compute_color_to_class_id(uint8_t r, uint8_t g, uint8_t b)
 {
     std::vector<uint8_t> semantics_color = {r, g, b};
-    LOG(INFO) << "in compute....: " << semantics_color[0] << " " << semantics_color[1] << " " << semantics_color[2];
+    // LOG(INFO) << "in compute....: " << semantics_color[0] << " " << semantics_color[1] << " " << semantics_color[2];
     return color_to_class_id.at(semantics_color);
 }
 
@@ -70,7 +70,8 @@ static uint8_t compute_color_to_class_id(uint32_t rgb)
     g = (rgb >> 8) & 0xff;
     b = rgb & 0xff;
     std::vector<uint8_t> semantics_color = {r, g, b};
-    LOG(INFO) << "in compute....: " << std::to_string(semantics_color[0]) << " " << std::to_string(semantics_color[1]) << " " << std::to_string(semantics_color[2]);
+    // LOG(INFO) << "in compute....: " << std::to_string(semantics_color[0]) << " " << std::to_string(semantics_color[1]) 
+    //         << " " << std::to_string(semantics_color[2]) << " from " << std::to_string(rgb);
     return color_to_class_id.at(semantics_color);
 }
 

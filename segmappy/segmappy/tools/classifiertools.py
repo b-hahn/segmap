@@ -163,7 +163,6 @@ def visualize_side_by_side(segments, extra_info=None, show_all=False):
 
 def get_default_dataset(config, folder):
     from ..core.dataset import Dataset
-
     dataset = Dataset(
         folder=folder,
         base_dir=config.base_dir,

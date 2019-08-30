@@ -35,6 +35,9 @@ void IncrementalSegmenter<ClusteredPointT, PolicyName>::segment(
     partial_clusters[i].partial_clusters_set->segment_id = cluster_ids_to_segment_ids[i];
   }
 
+// if (cloud.size() > 0) {
+//     LOG(INFO) << "in IncrementalSegmenter::segment(): " << std::to_string(cloud[0].rgb);
+// }
   // Find old clusters and new partial clusters.
   growRegions(normals, is_point_modified, cluster_ids_to_segment_ids, cloud,
               points_neighbors_provider, partial_clusters, renamed_segments);
@@ -157,6 +160,61 @@ inline void IncrementalSegmenter<ClusteredPointT, PolicyName>::growRegionFromSee
     ++current_seed_index;
   }
 }
+
+// // template specialization for EuclideanSemanticClustering
+// template<typename ClusteredPointT>
+// inline void IncrementalSegmenter<ClusteredPointT, EuclideanSemanticDistance>::growRegionFromSeed(
+//     const PointNormals& normals, const ClusteredCloud& cloud,
+//     PointsNeighborsProvider<ClusteredPointT>& points_neighbors_provider, const size_t seed_index,
+//     std::vector<bool>& processed, PartialClusters& partial_clusters,
+//     std::vector<std::pair<Id, Id>>& renamed_segments) const {
+
+//         LOG(INFO) << "spec!";
+//   // Create a new partial cluster.
+//   partial_clusters.emplace_back();
+//   PartialCluster& partial_cluster = partial_clusters.back();
+//   size_t partial_cluster_id = partial_clusters.size() - 1u;
+//   partial_cluster.partial_clusters_set = std::make_shared<PartialClustersSet>();
+//   partial_cluster.partial_clusters_set->partial_clusters_indices.insert(partial_cluster_id);
+
+//   // Initialize the seeds queue.
+//   std::vector<size_t>& region_indices = partial_cluster.point_indices;
+//   std::vector<size_t> seed_queue;
+//   size_t current_seed_index = 0u;
+//   seed_queue.push_back(seed_index);
+//   region_indices.push_back(seed_index);
+
+//   // Search for neighbors until there are no more seeds.
+//   while (current_seed_index < seed_queue.size()) {
+//     // Search for points around the seed.
+//     std::vector<int> neighbors_indices = points_neighbors_provider.getNeighborsOf(
+//         seed_queue[current_seed_index], search_radius_);
+
+//     // Decide on which points should we continue the search and if we have to link partial
+//     // clusters.
+//     for (const auto neighbor_index : neighbors_indices) {
+//       if (neighbor_index != -1 && Policy::canGrowToPoint(
+//           policy_params_, normals, seed_queue[current_seed_index], neighbor_index)) {
+//         if (isPointAssignedToCluster(cloud[neighbor_index])) {
+//           // If the search reaches an existing cluster we link to its partial clusters set.
+//           if (partial_cluster_id != getClusterId(cloud[neighbor_index])) {
+//             linkPartialClusters(partial_cluster_id, getClusterId(cloud[neighbor_index]),
+//                                 partial_clusters, renamed_segments);
+//           }
+//         } else if (!processed[neighbor_index]) {
+//           // Determine if the point can be used as seed for the region.
+//           if (Policy::canPointBeSeed(policy_params_, normals, neighbor_index)) {
+//             seed_queue.push_back(neighbor_index);
+//           }
+//           // Assign the point to the current partial cluster.
+//           region_indices.push_back(neighbor_index);
+//           processed[neighbor_index] = true;
+//         }
+//       }
+//     }
+//     ++current_seed_index;
+//   }
+// }
 
 template<typename ClusteredPointT, typename PolicyName>
 inline void IncrementalSegmenter<ClusteredPointT, PolicyName>::growRegions(

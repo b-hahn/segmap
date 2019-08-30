@@ -110,7 +110,6 @@ bool SegMatchWorker::processLocalMap(
   if(params_.close_loops) {
     CHECK_NOTNULL(loop_closure);
   }
-
   if ((params_.localize && target_cloud_loaded_) || params_.close_loops) {
     // Check that the robot drove enough since last segmentation.
     bool robot_drove_enough = false;
@@ -277,6 +276,10 @@ void SegMatchWorker::publishTargetRepresentation() const {
   translateCloud(Translation(0.0, 0.0, -params_.distance_to_lower_target_cloud_for_viz_m),
                  &target_representation);
   sensor_msgs::PointCloud2 target_representation_as_message;
+  // if (target_representation.size() > 0) {
+  //   pcl::io::savePCDFileASCII("target_map.pcd",
+  //                                 target_representation);
+  // }
   convert_to_point_cloud_2_msg(target_representation, params_.world_frame,
                                &target_representation_as_message);
   target_representation_pub_.publish(target_representation_as_message);

@@ -56,18 +56,20 @@ void SemanticSegmenter<ClusteredPointT>::segment(
   //    that's what I need to reimplement and I can reuse the rest of the code.
 
   // TODO: is the kdtree being constructed anywhere?
-  std::cout << "==========================================================\n";
-  std::cout << "num point in cloud:" << cloud.size() << std::endl;
-  std::cout << "Constructing segmenter!" << std::endl;
+  // std::cout << "==========================================================\n";
+  // std::cout << "num point in cloud:" << cloud.size() << std::endl;
+  // std::cout << "Constructing segmenter!" << std::endl;
   // search::SemanticKdTreeFLANN<ClusteredPointT> segmenter(true);
-  search::SemanticKdTreeFLANN<ClusteredPointT, search::L2_Color<float>> segmenter(true);
-  std::cout << "Setting input cloud!" << std::endl;
+  search::SemanticKdTreeFLANN<ClusteredPointT, search::L2_Semantics<float>> segmenter(true);
+  // search::SemanticKdTreeFLANN<ClusteredPointT, flann::L2_Simple<float>> segmenter(true);
+  // search::SemanticKdTreeFLANN<ClusteredPointT, search::L2_Copy<float>> segmenter(true);
+  // std::cout << "Setting input cloud!" << std::endl;
   segmenter.setInputCloud(cloud_ptr);
-  std::cout << "Extracting clusters!" << std::endl;
+  // std::cout << "Extracting clusters!" << std::endl;
   segmenter.extractEuclideanClusters(
       cloud, radius_for_growing_, cluster_indices,
       min_segment_size_,max_segment_size_);
-  std::cout << "Done with extraction!" << std::endl;
+  // std::cout << "Done with extraction!" << std::endl;
 
   for (const auto& point_indices : cluster_indices) {
     segmented_cloud.addSegment(point_indices, cloud);

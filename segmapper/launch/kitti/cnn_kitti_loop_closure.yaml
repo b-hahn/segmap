@@ -27,8 +27,10 @@ SegMapper: {
     publish_full_map: false,
     map_publication_rate_hz: 3,
 
-    remove_ground_from_local_map: true,
-    ground_distance_to_robot_center_m: 1.70,
+    remove_ground_from_local_map: false,
+    ground_distance_to_robot_center_m: 0.5,
+
+    # minimum_distance_to_add_pose: 0,
   },
 
   # SegMatchWorker parameters
@@ -57,8 +59,8 @@ SegMapper: {
     filter_boundary_segments: true,
     boundary_radius_m: 999.0,
     filter_duplicate_segments: true,
-    centroid_distance_threshold_m: 2.5,  # edit this
-    min_time_between_segment_for_matches_s: 60,
+    centroid_distance_threshold_m: 1.5,  # edit this
+    min_time_between_segment_for_matches_s: 10,
     check_pose_lies_below_segments: false,
 
     LocalMap: {
@@ -72,18 +74,23 @@ SegMapper: {
 
     Segmenters: {
       segmenter_type: "IncrementalEuclideanDistance", # IncrementalSmoothnessConstraints, SimpleSmoothnessConstraints
-      min_cluster_size: 20,
-      max_cluster_size: 15000,
-      radius_for_growing: 0.5
+      # segmenter_type: "SemanticEuclideanClustering",
+      # segmenter_type: "RGBRegionGrowing",
+      min_cluster_size: 50,
+      max_cluster_size: 5000,
+      radius_for_growing: 0.4,
     },
 
     Descriptors: {
-      descriptor_types: ["CNN"]
+      # descriptor_types: ["EigenvalueBased"],
+      descriptor_types: ["CNN"],
+      use_color: false,
+      use_semantic_segmentation: false
     },
 
     Classifier: {
      threshold_to_accept_match: 0.65,
-     n_nearest_neighbours: 120, #25
+     n_nearest_neighbours: 25, #25
      knn_feature_dim: 64, #32
      enable_two_stage_retrieval: false,
      apply_hard_threshold_on_feature_distance: false,
@@ -92,13 +99,13 @@ SegMapper: {
      normalize_eigen_for_knn: false,
      normalize_eigen_for_hard_threshold: false,
      max_eigen_features_values: [2493.5, 186681.0, 188389.0, 0.3304, 188388.0, 1.0899, 0.9987],
-     do_not_use_cars: true,
+     do_not_use_cars: false,
     },
 
     GeometricConsistency: {
       recognizer_type: "Simple", #"Simple", "Partitioned"
-      resolution: 0.6,
-      min_cluster_size: 6,
+      resolution: 1.5,
+      min_cluster_size: 15,
       max_consistency_distance_for_caching: 10.0,
     }
   },

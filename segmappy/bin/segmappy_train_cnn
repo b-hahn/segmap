@@ -300,7 +300,7 @@ else:
         init_model_no_rl(tuple(preprocessor.voxels), n_classes, use_color=config.use_color, use_semantics=config.use_semantics)
 
     # model saver
-    saver = tf.train.Saver(max_to_keep=config.checkpoints, save_relative_paths=True)
+    saver = tf.train.Saver(max_to_keep=config.checkpoints, save_relative_paths=True, keep_checkpoint_every_n_hours=0.15))
 
 # get key tensorflow variables
 cnn_graph = tf.get_default_graph()

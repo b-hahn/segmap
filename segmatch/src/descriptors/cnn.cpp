@@ -167,7 +167,8 @@ void CNNDescriptor::describe4D(SegmentedCloud* segmented_cloud_ptr) {
 
       // store semantic segmentation class of each point in vector
       // TODO: shouldn't I store distribution of classes for this segment in the 65D vector?
-      LOG(INFO) << "compute_color_to_class_id(point.semantics_rgb): " << std::to_string(compute_color_to_class_id(point.semantics_rgb));
+    //   LOG(INFO) << "compute_color_to_class_id(point.semantics_rgb): " << std::to_string(compute_color_to_class_id(point.semantics_rgb))
+    //             << " from " << std::to_string(point.semantics_rgb);
       segment_semantic_segmentation.push_back(compute_color_to_class_id(point.semantics_rgb));
     }
     // TODO: make counts float values
@@ -219,6 +220,7 @@ void CNNDescriptor::describe4D(SegmentedCloud* segmented_cloud_ptr) {
     it->second.getLastView().n_points_when_last_described = num_points;
 
     batch_nn_input.push_back(nn_input);
+    segment_semantic_segmentation.clear();
   }
   BENCHMARK_RECORD_VALUE("SM.Worker.Describe.NumSegmentsDescribed",
                          batch_nn_input.size());

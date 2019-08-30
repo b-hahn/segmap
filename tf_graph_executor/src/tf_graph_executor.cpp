@@ -296,34 +296,34 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     }
   }
 
-    // TODO: can remove semantic_segmentation from the Array3D overload, right?
-    auto semantic_segmentation_shape = TensorShape();
-    semantic_segmentation_shape.AddDim((int64) inputs.size());
-    semantic_segmentation_shape.AddDim(66u);
-    //semantic_segmentation_shape.AddDim(1u);
-    Tensor semantic_segmentation_tensor(DT_FLOAT, semantic_segmentation_shape);
+  //   // TODO: can remove semantic_segmentation from the Array3D overload, right?
+  //   auto semantic_segmentation_shape = TensorShape();
+  //   semantic_segmentation_shape.AddDim((int64) inputs.size());
+  //   semantic_segmentation_shape.AddDim(66u);
+  //   //semantic_segmentation_shape.AddDim(1u);
+  //   Tensor semantic_segmentation_tensor(DT_FLOAT, semantic_segmentation_shape);
 
-  if (semantic_segmentation != nullptr) {
-    // put values in the input tensor
-    auto semantic_segmentation_tensor_values = semantic_segmentation_tensor.tensor<float, 2>();
-    for (size_t i=0; i < semantic_segmentation->size(); i++) {
-        for (size_t j=0; j < scales[0].size(); j++) {
-            semantic_segmentation_tensor_values(i, j) = (*semantic_segmentation)[i][j];
-        }
-    }
-  }
+  // if (semantic_segmentation != nullptr) {
+  //   // put values in the input tensor
+  //   auto semantic_segmentation_tensor_values = semantic_segmentation_tensor.tensor<float, 2>();
+  //   for (size_t i=0; i < semantic_segmentation->size(); i++) {
+  //       for (size_t j=0; j < scales[0].size(); j++) {
+  //           semantic_segmentation_tensor_values(i, j) = (*semantic_segmentation)[i][j];
+  //       }
+  //   }
+  // }
 
   std::vector<Tensor> output_tensors;
-  std::vector<std::pair<std::string, tensorflow::Tensor>> feedDict;
-  if (semantic_segmentation == nullptr) {
-      feedDict = { { input_tensor_name, inputTensor }, { scales_tensor_name, scales_tensor } };
-  } else {
-      feedDict = { { input_tensor_name, inputTensor },
-                   { scales_tensor_name, scales_tensor },
-                   { semantic_segmentation_tensor_name, semantic_segmentation_tensor } };
-  }
+  // std::vector<std::pair<std::string, tensorflow::Tensor>> feedDict;
+  // if (semantic_segmentation == nullptr) {
+  // feedDict = { { input_tensor_name, inputTensor }, { scales_tensor_name, scales_tensor } };
+  // } else {
+  //     feedDict = { { input_tensor_name, inputTensor },
+  //                  { scales_tensor_name, scales_tensor },
+  //                  { semantic_segmentation_tensor_name, semantic_segmentation_tensor } };
+  // }
   Status status = this->executeGraph(
-      feedDict,
+      {{input_tensor_name, inputTensor}, {scales_tensor_name, scales_tensor}},
       {descriptor_values_name, reconstruction_values_name},
       output_tensors);
 
@@ -396,7 +396,6 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     for (size_t j=0; j < inputs[0].container.size(); j++) {
       for (size_t k=0; k < inputs[0].container[0].size(); k++) {
         for (size_t l=0; l < inputs[0].container[0][0].size(); l++) {
-            // TODO: adapt to 4D
           inputTensorValues(i, j, k, l, 0) = inputs[i].container[j][k][l][0];
           inputTensorValues(i, j, k, l, 1) = inputs[i].container[j][k][l][1];
           inputTensorValues(i, j, k, l, 2) = inputs[i].container[j][k][l][2];
@@ -431,11 +430,13 @@ void TensorflowGraphExecutor::batchFullForwardPass(
     // put values in the input tensor
     auto semantic_segmentation_tensor_values = semantic_segmentation_tensor.tensor<float, 2>();
     for (size_t i=0; i < semantic_segmentation->size(); i++) {
-        for (size_t j=0; j < scales[0].size(); j++) {
+        for (size_t j=0; j < (*semantic_segmentation)[0].size(); j++) {
             semantic_segmentation_tensor_values(i, j) = (*semantic_segmentation)[i][j];
+            // LOG(INFO) << "semantic_segmentation_tensor_values(i = " << std::to_string(i) << ", " << std::to_string(j) << ") = " << std::to_string(semantic_segmentation_tensor_values(i, j));
         }
     }
   }
+  // LOG(INFO) << std::to_string(inputs.size());
 
   std::vector<Tensor> output_tensors;
   std::vector<std::pair<std::string, tensorflow::Tensor>> feedDict;

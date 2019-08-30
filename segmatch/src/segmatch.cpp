@@ -93,7 +93,7 @@ void SegMatch::processAndSetAsSourceCloud(
 
   // Describe the cloud.
   BENCHMARK_START("SM.Worker.Describe");
-  descriptors_->describe(&segmented_source_clouds_[track_id]);
+  descriptors_->describe(&segmented_source_clouds_[track_id] /* , params_.descriptors_params.use_color, params_.descriptors_params.use_semantic_segmentation */);
   BENCHMARK_STOP("SM.Worker.Describe");
   BENCHMARK_RECORD_VALUE("SM.TargetMapSegments", segmented_target_cloud_.size());
 }
@@ -101,6 +101,19 @@ void SegMatch::processAndSetAsSourceCloud(
 void SegMatch::processAndSetAsTargetCloud(MapCloud& target_cloud) {
   // Process the cloud.
   processCloud(target_cloud, &segmented_target_cloud_);
+  std::vector<Id> ids;
+  // LOG(INFO) << "Num target centroids: " << segmented_target_cloud_.centroidsAsPointCloud(ids).size();
+  auto target_centroids = segmented_target_cloud_.centroidsAsPointCloud(ids);
+
+  std::string target_centroids_file_name = "target_centroids.txt";
+  std::ofstream target_centroids_file;
+  target_centroids_file.open(target_centroids_file_name, std::ios_base::app);
+
+  for (uint16_t i = 0; i < target_centroids.size(); ++i) {
+    target_centroids_file << std::to_string(ids[i]) << " ";
+    target_centroids_file << target_centroids[i].x << " " << target_centroids[i].y << " " << target_centroids[i].z << "\n"; // target segment centroid x, y and z coords
+  }
+  target_centroids_file.close();
 
   // Overwrite the old target.
   classifier_->setTarget(segmented_target_cloud_);
@@ -122,6 +135,7 @@ void SegMatch::processCloud(MapCloud& cloud,
                             SegmentedCloud* segmented_cloud) {
   std::cout << "Size of PC: " << cloud.size() << std::endl;
   std::cout << "Size of segmented PC 0: " << segmented_cloud->size() << std::endl;
+  LOG(INFO) << "semantic color of point in cloud: " << cloud[1].semantics_rgb;
   // Build a kd-tree of the cloud.
   MapCloud::ConstPtr cloud_ptr(&cloud, [](MapCloud const* ptr) {});
   KdTreePointsNeighborsProvider<MapPoint> kd_tree;
@@ -176,7 +190,7 @@ void SegMatch::processCloud(MapCloud& cloud,
   filterNearestSegmentsInCloud(*segmented_cloud, params_.centroid_distance_threshold_m, 5u);
   std::cout << "Size of segmented PC 3: " << segmented_cloud->size() << std::endl;
 
-  descriptors_->describe(segmented_cloud);
+  descriptors_->describe(segmented_cloud/* , params_.descriptors_params.use_color, params_.descriptors_params.use_semantic_segmentation */);
 }
 
 PairwiseMatches SegMatch::findMatches(PairwiseMatches* matches_after_first_stage,

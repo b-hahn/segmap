@@ -15,7 +15,7 @@ from segmappy import Dataset
 from segmappy.tools.hull import point_in_hull, n_points_in_hull, are_in_hull
 
 # DATASET_FOLDER = "with_merge_events/drive18"
-DATASET_FOLDER = "2011_09_30_drive_0027_decent"
+DATASET_FOLDER = "2011_10_03_drive_0027_bootstrap2"
 FILE_PATH = "/home/bhahn/.segmap/training_datasets/" + DATASET_FOLDER + "/matches_database.csv"
 if os.path.isfile(FILE_PATH):
     os.remove(FILE_PATH)

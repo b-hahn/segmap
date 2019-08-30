@@ -9,14 +9,32 @@
   <rosparam command="load" file="$(find segmapper)/launch/kitti/cnn_kitti_localization.yaml"/>
 
  <!-- Target cloud -->
-  <!-- <arg name="target_cloud" value="/home/bhahn/.segmap/kitti/drive27_target_map.pcd"/> -->
-  <arg name="target_cloud" value="/home/bhahn/segmap_ws/testmap2.pcd"/>
+ <!-- <arg name="target_cloud" value="$(env HOME)/.segmap/kitti/drive27_target_map.pcd"/> -->
+  <!-- <arg name="target_cloud" value="/home/bhahn/.segmap/kitti/full_LC_basemap/320_three_LCs_decent2019-03-04T11:08:07.307876.pcd"/> -->
+  <!-- <arg name="target_cloud" value="/home/bhahn/.segmap/kitti/full_LC_basemap/320_03x_oneLC_2019-03-15T08:39:11.503339.pcd"/> -->
+  <!-- <arg name="target_cloud" value="/external_datasets/bhahn/2011_09_30/2011_09_30_drive_0027_sync/basemaps/0027_300s_basemap_two_LCs2019-04-19T04:42:56.447170.pcd"/> -->
+  <!-- <arg name="target_cloud" value="/external_datasets/bhahn/2011_10_03/basemaps/0027_320s_basemap_one_LC2019-04-24T12:42:37.092691.pcd"/> -->
+  <arg name="target_cloud" value="/external_datasets/bhahn/2011_10_03/basemaps/0027_320_map2019-05-09T19:16:52.560291.pcd"/>
+
+  <!-- <arg name="target_cloud" value="/external_datasets/bhahn/2019-03-21/basemaps/2019-03-21-10-19-23_map12019-04-09T13:02:42.120039.pcd"/> -->
+  <!-- <arg name="target_cloud" value="/external_datasets/bhahn/2019-03-21/basemaps/19-23/2019-03-21-10-19-23_map_2019-05-05T11:09:55.573508_transformed_-17deg.pcd"/> -->
+  <!-- <arg name="target_cloud" value="/external_datasets/bhahn/2019-03-21/basemaps/19-23/2019-03-21-10-19-23_map_2019-05-07T12:17:59.415522_transformed.pcd"/> -->
+  <!-- <arg name="target_cloud" value="/external_datasets/bhahn/2019-03-21/basemaps/19-23/2019-03-21-10-19-23_map_2019-05-07T12:17:59.415522_transformed-14.000000.pcd"/> -->
+  <!-- <arg name="target_cloud" value="/external_datasets/bhahn/2019-03-21/basemaps/13-10/13-10_map_bag42019-05-09T12:20:49.917334_transformed9999.000000x9999.000000y-80.000000z_deg.pcd"/> -->
+  <!-- <arg name="target_cloud" value="/external_datasets/bhahn/2019-03-21/basemaps/13-10/13-10_60_to_1201971-08-26T00:43:28_transformed0.000000x0.000000y0.000000z_deg.pcd"/> -->
   <rosparam param="/SegMapper/SegMatchWorker/target_cloud_filename" subst_value="True">$(arg target_cloud)</rosparam>
 
 
   <!-- CNN model path -->
   <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64/"/>
+  <!-- <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64_standard/2019-04-12-09-55-07/"/> -->
+  <!-- <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64_standard/2019-04-23-19-28-41/"/> -->
+  <!-- <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64_no_rloss/2019-04-11-18:01:50/"/> -->
+  <!-- <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64_color_semantics/2019-04-29-17-08-50/"/> -->
+  <!-- <arg name="cnn_model_path" value="$(env HOME)/.segmap/trained_models/segmap64_color_semantics/2019-05-08-16-25-34/"/> -->
   <rosparam param="/SegMapper/SegMatchWorker/SegMatch/Descriptors/cnn_model_path" subst_value="True">$(arg cnn_model_path)</rosparam>
+  <arg name="model_version" value="''"/>
+  <rosparam param="/SegMapper/SegMatchWorker/SegMatch/Descriptors/model_version" subst_value="True">$(arg model_version)</rosparam>
 
   <!-- Semantics nn path -->
   <arg name="semantics_nn_path" value="$(env HOME)/.segmap/trained_models/segmap64_semantics/"/>

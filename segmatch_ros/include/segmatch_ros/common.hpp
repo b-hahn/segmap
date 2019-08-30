@@ -91,6 +91,7 @@ static void convert_to_pcl_point_cloud(const sensor_msgs::PointCloud2& cloud_mes
 static void convert_to_point_cloud_2_msg(const segmatch::PointICloud& cloud,
                                          const std::string& frame,
                                          sensor_msgs::PointCloud2* converted) {
+  // LOG(INFO) << "convert_to_point_cloud_2_msg 1";
   CHECK_NOTNULL(converted);
   // Convert to PCLPointCloud2.
   pcl::PCLPointCloud2 pcl_point_cloud_2;
@@ -104,6 +105,7 @@ static void convert_to_point_cloud_2_msg(const segmatch::PointICloud& cloud,
 static void convert_to_point_cloud_2_msg(const segmatch::PointCloud& cloud,
                                          const std::string& frame,
                                          sensor_msgs::PointCloud2* converted) {
+  // LOG(INFO) << "convert_to_point_cloud_2_msg 2";
   segmatch::PointICloud cloud_i;
   pcl::copyPointCloud(cloud, cloud_i);
   convert_to_point_cloud_2_msg(cloud_i, frame, converted);
@@ -179,7 +181,13 @@ static segmatch::SegMatchParams getSegMatchParams(const ros::NodeHandle& nh,
               params.descriptors_params.cnn_model_path);
   nh.getParam(ns + "/Descriptors/semantics_nn_path",
               params.descriptors_params.semantics_nn_path);
-
+  nh.getParam(ns + "/Descriptors/use_color",
+              params.descriptors_params.use_color);
+  nh.getParam(ns + "/Descriptors/use_semantic_segmentation",
+              params.descriptors_params.use_semantic_segmentation);
+  nh.getParam(ns + "/Descriptors/model_version",
+              params.descriptors_params.model_version);
+    LOG(INFO)<<  ">>>>>>>>>>>>>> use_semantic_segmentation: " << params.descriptors_params.use_semantic_segmentation;
   // Segmenter parameters.
   nh.getParam(ns + "/Segmenters/segmenter_type",
               params.segmenter_params.segmenter_type);
@@ -263,7 +271,6 @@ static segmatch::SegMatchParams getSegMatchParams(const ros::NodeHandle& nh,
               params.geometric_consistency_params.min_cluster_size);
   nh.getParam(ns + "/GeometricConsistency/max_consistency_distance_for_caching",
               params.geometric_consistency_params.max_consistency_distance_for_caching);
-
   return params;
 }
 

@@ -8,6 +8,7 @@
 #include <laser_slam/common.hpp>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/kdtree/kdtree_flann.h>
 
 #include "segmatch/common.hpp"
 #include "segmatch/descriptors/descriptors.hpp"

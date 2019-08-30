@@ -28,7 +28,6 @@ Descriptors::~Descriptors() {}
 
 Descriptors::Descriptors(const DescriptorsParameters& parameters/* , bool use_color, bool use_semantic_segmentation */) {
   CHECK_GT(parameters.descriptor_types.size(), 0) << "Description impossible without a descriptor.";
-//   LOG(INFO) << "--------------------> in Descriptors ctor: " << use_color << " and " << use_semantic_segmentation;
   // Create the descriptors.
   for (size_t i = 0u; i < parameters.descriptor_types.size(); ++i) {
     if (parameters.descriptor_types[i] == "EigenvalueBased") {
@@ -62,7 +61,6 @@ void Descriptors::describe(const Segment& segment, Features* features) {
 void Descriptors::describe(SegmentedCloud* segmented_cloud_ptr) {
   CHECK_NOTNULL(segmented_cloud_ptr);
   CHECK_GT(descriptors_.size(), 0) << "Description impossible without a descriptor.";
-  LOG(INFO) << "--------------------> " << use_color_ << " and " << use_semantic_segmentation_;
   for (size_t i = 0u; i < descriptors_.size(); ++i) {
     descriptors_[i]->describe(segmented_cloud_ptr, use_color_, use_semantic_segmentation_);
   }

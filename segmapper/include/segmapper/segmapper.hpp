@@ -108,6 +108,12 @@ class SegMapper {
 
   std::string pose_file_name;
   std::ofstream pose_file;
+  std::string segment_plot_file_name;
+  std::ofstream segment_plot_file;
+  std::string source_centroids_file_name;
+  std::ofstream source_centroids_file;
+  std::string odometry_file_name;
+  std::ofstream odometry_file;
 
   static constexpr laser_slam::Time kHeadDurationToExport_ns = 60000000000u;
 }; // SegMapper

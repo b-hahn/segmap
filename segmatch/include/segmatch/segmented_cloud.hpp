@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <execinfo.h>
 
 #include <glog/logging.h>
 #include <laser_slam/common.hpp>
@@ -279,7 +280,22 @@ Id SegmentedCloud::addSegment(const pcl::PointIndices& segment_to_add,
     segmentPoint.y = reference_cloud.points[index].y;
     segmentPoint.z = reference_cloud.points[index].z;
     segmentPoint.rgb = reference_cloud.points[index].rgb;
+    // segmentPoint.semantics_r = reference_cloud.points[index].r;
+    // segmentPoint.semantics_g = reference_cloud.points[index].g;
+    // segmentPoint.semantics_b = reference_cloud.points[index].b;
     segmentPoint.semantics_rgb = reference_cloud.points[index].semantics_rgb;
+    // LOG(INFO) << reference_cloud.points[index].rgb;
+
+
+    // void* callstack[128];
+    // int i, frames = backtrace(callstack, 128);
+    // char** strs = backtrace_symbols(callstack, frames);
+    // for (i = 0; i < frames; ++i) {
+    //     printf("%s\n", strs[i]);
+    // }
+    // free(strs);
+
+
     segment.getLastView().point_cloud.points.push_back(segmentPoint);
     if (i % publish_every_x_points == 0) {
         segment.getLastView().point_cloud_to_publish.points.push_back(segmentPoint);

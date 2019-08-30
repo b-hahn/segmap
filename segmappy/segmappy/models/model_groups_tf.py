@@ -587,7 +587,7 @@ def init_model_color_semantics(input_shape, n_classes, use_color, use_semantics)
     tf.identity(loss_r, "loss_r")
 
     # training
-    LOSS_R_WEIGHT = 200
+    LOSS_R_WEIGHT = 0  #200
     LOSS_C_WEIGHT = 1
     loss = tf.add(LOSS_C_WEIGHT * loss_c, LOSS_R_WEIGHT * loss_r, name="loss")
 
@@ -789,7 +789,7 @@ def init_model_color_semantics_no_rl(input_shape, n_classes, use_color, use_sema
     # with tf.name_scope("ReconstructionScopeAE") as scope:
     #     tf.add(reconstruction, 0, name="ae_reconstruction_read")
 
-    FN_TO_FP_WEIGHT = 0.9
+    # FN_TO_FP_WEIGHT = 0.9
     # loss_r = -tf.reduce_mean(
     #     FN_TO_FP_WEIGHT * cnn_input * tf.log(reconstruction + 1e-10)
     #     + (1 - FN_TO_FP_WEIGHT) * (1 - cnn_input) * tf.log(1 - reconstruction + 1e-10)
@@ -797,8 +797,8 @@ def init_model_color_semantics_no_rl(input_shape, n_classes, use_color, use_sema
     # tf.identity(loss_r, "loss_r")
 
     # training
-    LOSS_R_WEIGHT = 0  #200
-    LOSS_C_WEIGHT = 1
+    # LOSS_R_WEIGHT = 0  #200
+    # LOSS_C_WEIGHT = 1
     # loss = tf.add(LOSS_C_WEIGHT * loss_c, LOSS_R_WEIGHT * loss_r, name="loss")
 
     global_step = tf.Variable(0, trainable=False, name="global_step")

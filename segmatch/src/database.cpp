@@ -176,7 +176,6 @@ bool exportSegments(const std::string& filename, const SegmentedCloud& segmented
 
             // find semantic class id corresponding to semantics_r,g and b values
             // LOG(INFO) << std::to_string(point.semantics_r) << ", " << std::to_string(point.semantics_g) << ", " << std::to_string(point.semantics_b);
-            LOG(INFO) << "in exportSegments: " << std::to_string(static_cast<uint32_t>(point.semantics_rgb));
             // semantic_class = compute_color_to_class_id(point.semantics_r, point.semantics_g, point.semantics_b);
             semantic_class = compute_color_to_class_id(point.semantics_rgb);
             output_file << segment.segment_id << " ";

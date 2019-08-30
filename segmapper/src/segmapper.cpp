@@ -9,6 +9,7 @@
 #include <segmatch/utilities.hpp>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
+#include <chrono>
 
 using namespace laser_slam;
 using namespace laser_slam_ros;
@@ -16,6 +17,8 @@ using namespace segmatch;
 using namespace segmatch_ros;
 
 SegMapper::SegMapper(ros::NodeHandle& n) : nh_(n) {
+  // pcl::console::setVerbosityLevel(pcl::console::L_DEBUG);
+
   // Load ROS parameters from server.
   getParameters();
 
@@ -108,9 +111,19 @@ SegMapper::SegMapper(ros::NodeHandle& n) : nh_(n) {
       first_points_received_.push_back(false);
   }
 
-  boost::posix_time::ptime my_posix_time = ros::WallTime::now().toBoost();
-  pose_file_name = "localization_log_" + boost::posix_time::to_iso_extended_string(my_posix_time) + ".txt";
+  boost::posix_time::ptime my_posix_time = boost::posix_time::microsec_clock::universal_time();
+  std::string current_datetime = boost::posix_time::to_iso_extended_string(my_posix_time);
+  pose_file_name = "localization_log_" + current_datetime + ".txt";
   LOG(INFO) << "Logging localizations to " << pose_file_name;
+
+  segment_plot_file_name = "segment_log_" + current_datetime + ".txt";
+  LOG(INFO) << "Logging segment data to " << segment_plot_file_name;
+
+  source_centroids_file_name = "source_centroids_log_" + current_datetime + ".txt";
+  LOG(INFO) << "Logging source centroid data to " << segment_plot_file_name;
+
+  odometry_file_name = "odometry_log_" + current_datetime + ".txt";
+  LOG(INFO) << "Logging odometry data to " << odometry_file_name;
   }
 
 SegMapper::~SegMapper() {}
@@ -127,6 +140,9 @@ void SegMapper::publishMapThread() {
     for (size_t i = 0u; i < local_maps_.size(); ++i) {
       std::unique_lock<std::mutex> map_lock(local_maps_mutexes_[i]);
       local_maps += local_maps_[i].getFilteredPoints();
+    //   if (local_maps.size() > 0) {
+    //     LOG(INFO) << "local_maps[0].rgb: " << std::to_string(local_maps[0].rgb);
+    //   }
       map_lock.unlock();
     }
     sensor_msgs::PointCloud2 msg;
@@ -206,6 +222,49 @@ void SegMapper::segMatchThread() {
       local_maps_[track_id].updatePoseAndAddPoints(new_points, current_pose);
     }
 
+    // LOG(INFO) << "ts = " << current_pose.time_ns << "at scan_cb_counter = "
+    //           << laser_slam_workers_[0]->scan_cb_counter << " and ros time: "
+    //           << ros::Time::now() << "and addition:" << current_pose.time_ns + laser_slam_workers_[0]->returnBaseTimeNs();
+
+// store segment size, local map size, time, and whether there was a localization and store loc dist.
+    segment_plot_file.open(segment_plot_file_name, std::ios_base::app);
+    segment_plot_file << current_pose.time_ns +
+                             laser_slam_workers_[0]->returnBaseTimeNs()
+                      << " ";
+    segment_plot_file << local_maps_[track_id].getFilteredPointsPtr()->size()
+                      << " "; // local map size
+    segment_plot_file << segmatch_worker_.returnSourceSegmentsPtr()->size()
+                      << "\n"; // num segments
+    segment_plot_file.close();
+    LOG(INFO) << current_pose.time_ns +
+                     laser_slam_workers_[0]->returnBaseTimeNs()
+              << " " << local_maps_[track_id].getFilteredPointsPtr()->size()
+              << " " << segmatch_worker_.returnTargetSegmentsPtr()->size()
+              << " " << segmatch_worker_.returnSourceSegmentsPtr()->size();
+
+    // write segment centroids to file
+    std::vector<Id> ids;
+    auto source_centroids = segmatch_worker_.returnSourceSegmentsPtr()->centroidsAsPointCloud(ids);
+    source_centroids_file.open(source_centroids_file_name, std::ios_base::app);
+    for (uint16_t i = 0; i < source_centroids.size(); ++i) {
+        source_centroids_file << current_pose.time_ns + laser_slam_workers_[0]->returnBaseTimeNs() << " "
+                              << laser_slam_workers_[0]->scan_cb_counter << " ";
+        source_centroids_file << std::to_string(ids[i]) << " ";
+        source_centroids_file << source_centroids[i].x << " " << source_centroids[i].y << " " << source_centroids[i].z
+                              << "\n"; // target segment centroid x, y and z coords
+    }
+    source_centroids_file.close();
+
+    // write current pose to file
+    odometry_file.open(odometry_file_name, std::ios_base::app);
+    odometry_file << current_pose.time_ns + laser_slam_workers_[0]->returnBaseTimeNs() << " "
+                  << laser_slam_workers_[0]->scan_cb_counter << " ";
+    odometry_file << current_pose.T_w.getPosition()[0] << " " << current_pose.T_w.getPosition()[1] << " "
+                  << current_pose.T_w.getPosition()[2] << "\n"; // current pose
+    odometry_file.close();
+
+    std::string red = "\u001b[31;1m";
+    std::string reset = "\u001b[0m";
     // Process the source cloud.
     if (segmatch_worker_params_.localize) {
       if (segmatch_worker_.processLocalMap(local_maps_[track_id], current_pose, track_id)) {
@@ -216,17 +275,33 @@ void SegMapper::segMatchThread() {
           // the localization occurred for each robot)
           CHECK(laser_slam_workers_.size() == 1) << "Number of robots (or laser_slam_workers) not equal to 1; no clear "
                                                     "definition of current number of scans/frames.";
-          LOG(INFO) << "Succesful Localization! loc_counter = " << loc_counter
+          auto matches = segmatch_worker_.getMatches();
+          float distance = 0;
+          float dist_x, dist_y, dist_z;
+          uint16_t num_matches = matches.size();
+          for (uint8_t i = 0; i < num_matches; ++i) {
+            dist_x = (matches[i].getCentroids().second.x - matches[i].getCentroids().first.x);
+            dist_y = (matches[i].getCentroids().second.y - matches[i].getCentroids().first.y);
+            dist_z = (matches[i].getCentroids().second.z - matches[i].getCentroids().first.z);
+              distance += sqrt(dist_x * dist_x + dist_y * dist_y + dist_z * dist_z);
+          }
+          distance /= num_matches;
+          BENCHMARK_RECORD_VALUE("SM.MeanMatchesDistance", distance);
+
+          // compute mean distance of matches - should be low for correct matches
+          BENCHMARK_RECORD_VALUE("SM.NumMatchesPerLocalization", num_matches);
+          LOG(INFO) << "Successful Localization with " << std::to_string(num_matches)
+                    << red << " matches with mean distance = " << std::to_string(distance) << "!" << reset << " loc_counter = " << loc_counter
                     << ", scan_cb_counter = " << laser_slam_workers_[0]->scan_cb_counter << "("
                     << static_cast<float>(loc_counter) / laser_slam_workers_[0]->scan_cb_counter * 100
                     << "% frames localized), ts = " << current_pose.time_ns;
-            // draw localization TF
+          // draw localization TF
           Eigen::Matrix4f localization_pose = segmatch_worker_.getLatestLocalizationTransformation(track_id);
           Eigen::Matrix4f map_pose = localization_pose * current_pose.T_w.getTransformationMatrix().cast<float>();
-          for (uint8_t r = 0; r < localization_pose.rows(); ++r) {
-            std::cout << std::setprecision(4) << localization_pose.block<1,4>(r, 0) << "\tand\t\t" << current_pose.T_w.getTransformationMatrix().block<1,4>(r, 0) << "\t-->\t\t"
-                      << map_pose.block<1,4>(r, 0) << std::endl;
-          }
+        //   for (uint8_t r = 0; r < localization_pose.rows(); ++r) {
+        //     std::cout << std::setprecision(4) << localization_pose.block<1,4>(r, 0) << "\tand\t\t" << current_pose.T_w.getTransformationMatrix().block<1,4>(r, 0) << "\t-->\t\t"
+        //               << map_pose.block<1,4>(r, 0) << std::endl;
+        //   }
 
           pose_file.open(pose_file_name, std::ios_base::app);
           pose_file << laser_slam_workers_[0]->scan_cb_counter << "\n";
@@ -234,6 +309,7 @@ void SegMapper::segMatchThread() {
           // pose_file << current_pose.T_w.getPosition() << "\n\n";
           pose_file << map_pose.block<3,1>(0, 3) << "\n\n";
           pose_file.close();
+
           loc_counter++;
         if (!pose_at_last_localization_set_) {
           pose_at_last_localization_set_ = true;
@@ -243,18 +319,33 @@ void SegMapper::segMatchThread() {
               pose_at_last_localization_, current_pose.T_w));
           pose_at_last_localization_ = current_pose.T_w;
         }
+        // count number of segments on localization
+        // TODO: implement
+        // BENCHMARK_RECORD_VALUE("SM.NumSegmentsOnLocalization", laser_slam_workers_[0]-> "Get num Segments!1");
+
+        // count mean number of points per segment on loclaization
+        // TODO: implement
+        // BENCHMARK_RECORD_VALUE("SM.NumSegmentsOnLocalization", laser_slam_workers_[0]-> "Get num pts for all Segments!!");
+
+        // count number of localizations
+        // TODO: fix
+        // BENCHMARK_RECORD_VALUE("SM.NumLocalizations", 1);
       }
     } else {
+      double max_time_for_lc = 10000;
+      if (current_pose.time_ns < max_time_for_lc*1e9) {
+
       RelativePose loop_closure;
 
       // If there is a loop closure.
       if (segmatch_worker_.processLocalMap(local_maps_[track_id], current_pose,
                                            track_id, &loop_closure)) {
+        uint16_t num_matches = segmatch_worker_.getMatches().size();
         BENCHMARK_BLOCK("SM.ProcessLoopClosure");
-        LOG(INFO)<< "Found loop closure! track_id_a: " << loop_closure.track_id_a <<
-            " time_a_ns: " << loop_closure.time_a_ns <<
-            " track_id_b: " << loop_closure.track_id_b <<
-            " time_b_ns: " << loop_closure.time_b_ns;
+        LOG(INFO) << "Found loop closure! track_id_a: " << loop_closure.track_id_a
+                  << " time_a_ns: " << loop_closure.time_a_ns << " track_id_b: " << loop_closure.track_id_b
+                  << " time_b_ns: " << loop_closure.time_b_ns << red << " num_matches: " << std::to_string(num_matches)
+                  << reset;
 
         // Prevent the workers to process further scans (and add variables to the graph).
         BENCHMARK_START("SM.ProcessLoopClosure.WaitingForLockOnLaserSlamWorkers");
@@ -338,6 +429,11 @@ void SegMapper::segMatchThread() {
       for (const auto& worker : laser_slam_workers_) {
         worker->publishTrajectories();
       }
+    }
+    else
+    {
+        LOG(INFO) << "Time greater than " << std::to_string(max_time_for_lc)  << "s; ignoring loop closures!";
+    }
     }
 
     // The track was processed, reset the counter.

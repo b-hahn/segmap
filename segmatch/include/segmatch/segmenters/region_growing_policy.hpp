@@ -18,6 +18,8 @@ struct EuclideanDistance {};
 /// to a maximum threshold.
 struct SmoothnessConstraints {};
 
+struct EuclideanSemanticDistance {};
+
 //=================================================================================================
 //    Primary template for the RegionGrowingPolicy class
 //=================================================================================================
@@ -73,6 +75,9 @@ class RegionGrowingPolicy {
   /// \returns True if the candidate point must be included in the seed region, false otherwise.
   static bool canGrowToPoint(const PolicyParameters& params, const PointNormals& point_normals,
                              int seed_index, int candidate_index);
+
+    static bool canGrowToPoint(const PolicyParameters& params, const PclPoint& points,
+                                int seed_index, int candidate_index);
 
   /// \brief Rule for preparing the seed indices.
   /// \param point_normals Normal vectors to the points of the point cloud.
@@ -145,6 +150,93 @@ class RegionGrowingPolicy<EuclideanDistance> {
                              int seed_index, int candidate_index) {
     return true;
   }
+
+  /// \brief Rule for preparing the seed indices.
+  /// \param point_normals Normal vectors to the points of the point cloud.
+  /// \param first Random access iterator to the beginning of the indices container.
+  /// \param last Random access iterator to the end of the indices container.
+  template <typename RandomAccessIterator>
+  static void prepareSeedIndices(const PointNormals& point_normals, RandomAccessIterator first,
+                                 RandomAccessIterator last) {
+  }
+}; // class RegionGrowingPolicy<EuclideanDistance>
+
+
+//=================================================================================================
+//    Specialization of the RegionGrowingPolicy template for EuclideanSemanticDistance policies
+//=================================================================================================
+// TODO: the way this could work is to take not the normal but the points themselves.  Would need some non-binary way to see whether I can grow to another pt, though. 
+//       Can't just check whether it's the same class since that will only lead to very small clusters (I want geometry as well). Then again, how does it currently work if 
+//       in the EuclideanDistance part 'true' is always returned? How is the segmentation limit determined?
+
+/// \brief Defines a set of rules used by the incremental region growing segmenter.
+template<>
+class RegionGrowingPolicy<EuclideanSemanticDistance> {
+ public:
+  /// \brief Parameters of the segmentation policy.
+  struct PolicyParameters { };
+
+  /// \brief Create the parameters for the segmentation policy.
+  /// \param params Parameters of the segmenter.
+  /// \returns The parameters of the segmentation policy.
+  static PolicyParameters createParameters(const SegmenterParameters& params) {
+    return { };
+  }
+
+  /// \brief Gets the cluster ID of a target point.
+  /// \param point The target point.
+  /// \returns The cluster ID of the target point.
+  template <typename PointT>
+  static uint32_t getPointClusterId(const PointT& point) noexcept {
+    static_assert(pcl::traits::has_field<PointT, pcl::fields::ed_cluster_id>::value,
+                  "Region growing segmentation with EuclideanDistance policy can be performed "
+                  "only on points containing the ed_cluster_id field.");
+    return point.ed_cluster_id;
+  }
+
+  /// \brief Sets the cluster ID of a target point.
+  /// \param point The target point.
+  /// \param cluster_id The new cluster ID of the target point.
+  template <typename PointT>
+  static void setPointClusterId(PointT& point, const uint32_t cluster_id) noexcept {
+    static_assert(pcl::traits::has_field<PointT, pcl::fields::ed_cluster_id>::value,
+                  "Region growing segmentation with EuclideanDistance policy can be performed "
+                  "only on points containing the ed_cluster_id field.");
+    point.ed_cluster_id = cluster_id;
+  }
+
+  /// \brief Rule for determining if a candidate point can be used as seed for starting or
+  /// extending a region.
+  /// \param params Parameters of the segmentation policy.
+  /// \param point_normals Normal vectors to the points of the point cloud.
+  /// \param point_index Index of the candidate point.
+  /// \returns True if the point can be used as seed, false otherwise.
+  static bool canPointBeSeed(const PolicyParameters& params, const PointNormals& point_normals,
+                             int point_index) {
+    return true;
+  }
+
+  /// \brief Rule for determining if it is possible to grow a region from a seed point to include
+  /// a candidate point.
+  /// \param params Parameters of the segmentation policy.
+  /// \param point_normals Normal vectors to the points of the point cloud.
+  /// \param seed_index Index of the seed point.
+  /// \param candidate_index Index of the candidate point.
+  /// \returns True if the candidate point must be included in the seed region, false otherwise.
+  static bool canGrowToPoint(const PolicyParameters& params, const PointNormals& point_normals,
+                             int seed_index, int candidate_index) {
+    std::cout << "Wrong canGrowToPoint method!" << std::endl;
+    return true;
+  }
+// static bool canGrowToPoint(const PolicyParameters& params, const PclPoint& points,
+//                                 int seed_index, int candidate_index) {
+//     // if same semantic class --> grow to point. Else don't. 
+//     if (points[seed_index].semantics_rgb == points[candidate_index].semantics_rgb) {
+//         return true;
+//     } else {
+//         return false;
+//     }
+//   }
 
   /// \brief Rule for preparing the seed indices.
   /// \param point_normals Normal vectors to the points of the point cloud.

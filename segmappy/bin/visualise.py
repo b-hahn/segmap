@@ -14,10 +14,10 @@ configfile = "default_training.ini"
 config = Config(configfile)
 
 # load dataset
-dataset = get_default_dataset(config)
+dataset = get_default_dataset(config, config.cnn_train_folders)
 preprocessor = get_default_preprocessor(config)
 
-segments, positions, classes, n_classes, _, _, _ = dataset.load(
+segments, positions, classes, n_classes, _, _, _, _, _ = dataset.load(
     preprocessor=preprocessor
 )
 duplicate_classes = dataset.duplicate_classes

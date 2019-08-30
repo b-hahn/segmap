@@ -170,7 +170,7 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     std::vector<Voxel_>& new_voxels, VoxelCloud& new_active_centroids,
     VoxelCloud& new_inactive_centroids) {
   VoxelPointT centroid;
-  std::vector<uint16_t> semantic_class_counter(64, 0);
+  std::vector<uint16_t> semantic_class_counter(66, 0);
   auto centroid_map = centroid.getVector3fMap();
   uint32_t old_points_count = 0u;
   uint32_t new_points_count = std::distance(data.points_begin, data.points_end);
@@ -210,6 +210,9 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
       std::vector<uint8_t> semantics_color = { (it->point.semantics_rgb >> 16) & 0xff,
                                                (it->point.semantics_rgb >> 8) & 0xff,
                                                it->point.semantics_rgb & 0xff };
+      if (it->point.semantics_rgb == 32512) {
+          LOG(INFO) << "Found a point with semantics_rgb = 32512!!";
+      }
       // for (auto& c : semantics_color) {
       //   std::cout << std::to_string(c) << ", ";
       // }
@@ -244,9 +247,7 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
 
     centroid.semantics_rgb = static_cast<uint32_t>((uint32_t)semantics_color[0] << 16 | (uint32_t)semantics_color[1] << 8 | (uint32_t)semantics_color[2]);
 
-    // centroid.semantics_r = semantics_color[0];
-    // centroid.semantics_g = semantics_color[1];
-    // centroid.semantics_b = semantics_color[2];
+    // LOG(INFO) << "In DVF: " << compute_color_to_class_id(centroid.semantics_rgb);
 
     // debug code to visualize semantic segmentation colors instead of real RGB colors
     // uint32_t output_rgb = ((uint32_t)semantics_color[0] << 16 | (uint32_t)semantics_color[1] << 8 | (uint32_t)semantics_color[2]);
@@ -264,7 +265,10 @@ inline bool DynamicVoxelGrid<_DVG_TEMPLATE_SPEC_>::createVoxel_(
     new_inactive_centroids.push_back(centroid);
     centroid_pointer = &new_inactive_centroids.back();
   }
-
+  // LOG(INFO) << "centroid_pointer.semantics_rgb: " << centroid_pointer->semantics_rgb;
+//   LOG(INFO) << "centroid_pointer.semantics_r: " << std::to_string(centroid_pointer->semantics_r)
+//             << " centroid_pointer.semantics_g: " << std::to_string(centroid_pointer->semantics_g)
+//             << " centroid_pointer.semantics_b: " << std::to_string(centroid_pointer->semantics_b);
   new_voxels.emplace_back(centroid_pointer, index, total_points_count, semantic_class_counter);
   return is_new_voxel;
 }

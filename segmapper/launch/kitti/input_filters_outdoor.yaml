@@ -22,4 +22,4 @@
 - SimpleSensorNoiseDataPointsFilter:
     sensorType: 0
 - ObservationDirectionDataPointsFilter
-- OrientNormalsDataPointsFilter 
+- OrientNormalsDataPointsFilter
